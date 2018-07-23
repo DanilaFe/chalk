@@ -1,0 +1,13 @@
+name: chalk
+version: 0.1.0
+
+authors:
+  - Danila Fedorin <danila.fedorin@gmail.com>
+
+targets:
+  chalk:
+    main: src/chalk.cr
+
+crystal: 0.25.1
+
+license: MIT
