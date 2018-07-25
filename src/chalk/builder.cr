@@ -1,36 +1,38 @@
 require "./lexer.cr"
-require "./parser.cr"
+require "./parsers.cr"
 
 module Chalk
-    def self.type(type): Parser(Token)
-        return TypeParser.new(type).as(Parser(Token))
-    end
+    module Builder
+        def type(type): BasicParser(Token)
+            return TypeParser.new(type).as(BasicParser(Token))
+        end
 
-    def self.char(type): Parser(Token)
-        return CharParser.new(type).as(Parser(Token))
-    end
+        def char(type): BasicParser(Token)
+            return CharParser.new(type).as(BasicParser(Token))
+        end
 
-    def self.transform(parser : Parser(T), &transform : T -> R) forall T, R
-        return TransformParser.new(parser, &transform).as(Parser(R))
-    end
+        def transform(parser : BasicParser(T), &transform : T -> R) forall T, R
+            return TransformParser.new(parser, &transform).as(BasicParser(R))
+        end
 
-    def self.optional(parser : Parser(T)): Parser(T?) forall T
-        return OptionalParser.new(parser).as(Parser(T?))
-    end
+        def optional(parser : BasicParser(T)): BasicParser(T?) forall T
+            return OptionalParser.new(parser).as(BasicParser(T?))
+        end
 
-    def self.either(*args : Parser(T)): Parser(T) forall T
-        return EitherParser.new(args.to_a).as(Parser(T))
-    end
+        def either(*args : BasicParser(T)): BasicParser(T) forall T
+            return EitherParser.new(args.to_a).as(BasicParser(T))
+        end
 
-    def self.many(parser : Parser(T)): Parser(Array(T)) forall T
-        return ManyParser.new(parser).as(Parser(Array(T)))
-    end
+        def many(parser : BasicParser(T)): BasicParser(Array(T)) forall T
+            return ManyParser.new(parser).as(BasicParser(Array(T)))
+        end
 
-    def self.delimited(parser : Parser(T), delimiter : Parser(R)): Parser(Array(T)) forall T, R
-        return DelimitedParser.new(parser, delimiter).as(Parser(Array(T)))
-    end
+        def delimited(parser : BasicParser(T), delimiter : BasicParser(R)): BasicParser(Array(T)) forall T, R
+            return DelimitedParser.new(parser, delimiter).as(BasicParser(Array(T)))
+        end
 
-    def self.then(first : Parser(T), second : Parser(R)) forall T, R
-        return NextParser.new(first, second).as(Parser(Array(T | R)))
+        def then(first : BasicParser(T), second : BasicParser(R)) forall T, R
+            return NextParser.new(first, second).as(BasicParser(Array(T | R)))
+        end
     end
 end

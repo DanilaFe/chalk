@@ -72,7 +72,7 @@ module Chalk
 
         def lex(string)
             return @lexer.lex(string)
-                .select { |t| t[0] != " " }
+                .select { |t| !t[0][0].whitespace? }
                 .map do |tuple|
                     string, id = tuple
                     Token.new(string, TokenType.new(id))
