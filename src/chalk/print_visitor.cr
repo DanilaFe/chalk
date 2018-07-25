@@ -2,30 +2,30 @@ require "./tree.cr"
 
 module Chalk
   class PrintVisitor < Visitor
-    def initialize
+    def initialize(@stream : IO)
       @indent = 0
     end
 
     def print_indent
       @indent.times do
-        STDOUT << "  "
+        @stream << "  "
       end
     end
 
     def visit(id : TreeId)
       print_indent
-      puts id.id
+      @stream << id.id << "\n"
     end
 
     def visit(lit : TreeLit)
       print_indent
-      puts lit.lit
+      @stream << lit.lit << "\n"
     end
 
     def visit(op : TreeOp)
       print_indent
-      STDOUT << "[op] "
-      puts op.op
+      @stream << "[op] "
+      @stream << op.op << "\n"
       @indent += 1
     end
 
@@ -35,11 +35,11 @@ module Chalk
 
     def visit(function : TreeFunction)
       print_indent
-      STDOUT << "[function] " << function.name << "( "
+      @stream << "[function] " << function.name << "( "
       function.params.each do |param|
-        STDOUT << param << " "
+        @stream << param << " "
       end
-      puts ")"
+      @stream << ")" << "\n"
       @indent += 1
     end
 
@@ -50,7 +50,7 @@ module Chalk
     macro forward(text, type)
             def visit(tree : {{type}})
                 print_indent
-                puts {{text}}
+                @stream << {{text}} << "\n"
                 @indent += 1
             end
 

@@ -1,3 +1,5 @@
+require "./print_visitor.cr"
+
 module Chalk
   class Visitor
     def visit(tree : Tree)
@@ -11,6 +13,10 @@ module Chalk
     def accept(v : Visitor)
       v.visit(self)
       v.finish(self)
+    end
+
+    def to_s(io)
+        accept(PrintVisitor.new io)
     end
   end
 

@@ -7,6 +7,6 @@ module Chalk
   tokens = lexer.lex(File.read("test.txt"))
   trees = parser.parse?(tokens)
   trees.try do |trees|
-    trees.each &.accept(PrintVisitor.new)
+      trees.each { |tree| puts tree }
   end
 end
