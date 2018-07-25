@@ -32,6 +32,18 @@ module Chalk
         end
     end
 
+    class CharParser < Parser(Token)
+        def initialize(@char : Char)
+        end
+
+        def parse?(tokens, index)
+            return nil unless index < tokens.size
+            return nil unless (tokens[index].type == TokenType::Any) &&
+                tokens[index].string[0] == @char
+            return { tokens[index], index + 1}
+        end
+    end
+
     class TransformParser(T, R) < Parser(R)
         def initialize(@parser : Parser(T), &@block : T -> R)
         end
@@ -84,6 +96,28 @@ module Chalk
         end
     end
 
+    class DelimitedParser(T, R) < Parser(Array(T))
+        def initialize(@parser : Parser(T), @delimiter : Parser(R))
+        end
+
+        def parse?(tokens, index)
+            array = [] of T
+            first = @parser.parse?(tokens, index)
+            return { array, index } unless first
+            first_value, index = first
+            array << first_value
+            while delimiter = @delimiter.parse?(tokens, index)
+                _, new_index = delimiter
+                new = @parser.parse?(tokens, new_index)
+                break unless new
+                new_value, index = new
+                array << new_value
+            end
+
+            return { array, index }
+        end
+    end
+
     class NextParser(T, R) < Parser(Array(T | R))
         def initialize(@first : Parser(T), @second : Parser(R))
         end
@@ -111,7 +145,7 @@ module Chalk
         end
 
         def parse?(tokens, index)
-            @parser.try &.parse(tokens, index)
+            @parser.try &.parse?(tokens, index)
         end
     end
 end

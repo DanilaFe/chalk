@@ -24,6 +24,18 @@ module Chalk
         def initialize(@lit : Int64) end
     end
 
+    class TreeCall < Tree
+        property name : String
+        property params : Array(Tree)
+
+        def initialize(@name : String, @params : Array(Tree)) end
+        def accept(v : Visitor)
+            v.visit(self)
+            @params.each &.accept(v)
+            v.finish(self)
+        end
+    end
+
     class TreeOp < Tree
         property op : TokenType
         property left : Tree
@@ -73,17 +85,29 @@ module Chalk
         end
     end
 
+    class TreeAssign < Tree
+        property name : String
+        property expr : Tree
+
+        def initialize(@name : String, @expr : Tree) end
+        def accept(v : Visitor)
+            v.visit(self)
+            @expr.accept(v)
+            v.finish(self)
+        end
+    end
+
     class TreeIf < Tree
         property condition : Tree
         property block : Tree
-        property otherwise : Tree
+        property otherwise : Tree?
 
-        def initialize(@condition : Tree, @block : Tree, @otherwise : Tree) end
+        def initialize(@condition : Tree, @block : Tree, @otherwise : Tree? = nil) end
         def accept(v : Visitor)
             v.visit(self)
             @condition.accept(v)
             @block.accept(v)
-            @otherwise.accept(v)
+            @otherwise.try &.accept(v)
             v.finish(self)
         end
     end

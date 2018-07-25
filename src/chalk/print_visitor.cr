@@ -59,8 +59,10 @@ module Chalk
             end
         end
 
+        forward("[call]", TreeCall)
         forward("[block]", TreeBlock)
         forward("[var]", TreeVar)
+        forward("[assign]", TreeAssign)
         forward("[if]", TreeIf)
         forward("[while]", TreeWhile)
         forward("[return]", TreeReturn)

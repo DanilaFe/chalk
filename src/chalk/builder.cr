@@ -6,6 +6,10 @@ module Chalk
         return TypeParser.new(type).as(Parser(Token))
     end
 
+    def self.char(type): Parser(Token)
+        return CharParser.new(type).as(Parser(Token))
+    end
+
     def self.transform(parser : Parser(T), &transform : T -> R) forall T, R
         return TransformParser.new(parser, &transform).as(Parser(R))
     end
@@ -20,6 +24,10 @@ module Chalk
 
     def self.many(parser : Parser(T)): Parser(Array(T)) forall T
         return ManyParser.new(parser).as(Parser(Array(T)))
+    end
+
+    def self.delimited(parser : Parser(T), delimiter : Parser(R)): Parser(Array(T)) forall T, R
+        return DelimitedParser.new(parser, delimiter).as(Parser(Array(T)))
     end
 
     def self.then(first : Parser(T), second : Parser(R)) forall T, R
