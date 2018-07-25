@@ -8,6 +8,10 @@ targets:
   chalk:
     main: src/chalk.cr
 
+dependencies:
+  lex:
+    git: https://dev.danilafe.com/Chip-8-Wizardry/lex.git
+
 crystal: 0.25.1
 
 license: MIT

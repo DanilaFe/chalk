@@ -28,6 +28,14 @@ module Chalk
         KwReturn
     end
 
+    class Token
+        def initialize(@string : String, @type : TokenType)
+        end
+
+        getter string : String
+        getter type : TokenType
+    end
+
     class Lexer
         def initialize
             @lexer = Lex::Lexer.new
@@ -67,7 +75,7 @@ module Chalk
                 .select { |t| t[0] != " " }
                 .map do |tuple|
                     string, id = tuple
-                    { string, TokenType.new(id) }
+                    Token.new(string, TokenType.new(id))
                 end
         end
     end
