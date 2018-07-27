@@ -6,7 +6,7 @@ module Chalk
     property function : TreeFunction
     property addr : Int32
 
-    def initialize(@function : TreeFunction, @addr : Int32 = -1)
+    def initialize(@function, @addr = -1)
     end
 
     def to_s(io)
@@ -17,7 +17,7 @@ module Chalk
   class VarEntry < Entry
     property register : Int32
 
-    def initialize(@register : Int32)
+    def initialize(@register)
     end
 
     def to_s(io)
@@ -28,11 +28,11 @@ module Chalk
   class Table
     property parent : Table?
 
-    def initialize(@parent : Table? = nil)
+    def initialize(@parent = nil)
       @data = {} of String => Entry
     end
 
-    def []?(key) : Entry?
+    def []?(key)
       if entry = @data[key]?
         return entry
       end

@@ -9,7 +9,7 @@ module Chalk
     property file : String
     property mode : OutputMode
 
-    def initialize(@file : String = "",
+    def initialize(@file = "",
                    @mode = OutputMode::Tree)
     end
 

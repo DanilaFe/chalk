@@ -5,8 +5,7 @@ module Chalk
     abstract def parse?(tokens : Array(Token),
                         index : Int64) : Tuple(T, Int64)?
 
-    def parse(tokens : Array(Token),
-              index : Int64) : Tuple(T, Int64)
+    def parse(tokens, index)
       return parse?(tokens, index).not_nil!
     end
 

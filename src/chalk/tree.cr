@@ -1,25 +1,25 @@
 module Chalk
   class Visitor
-    def visit(tree : Tree)
+    def visit(tree)
     end
 
-    def finish(tree : Tree)
+    def finish(tree)
     end
   end
 
   class Transformer
-    def transform(tree : Tree) : Tree
+    def transform(tree)
       return tree
     end
   end
 
   class Tree
-    def accept(v : Visitor)
+    def accept(v)
       v.visit(self)
       v.finish(self)
     end
 
-    def apply(t : Transformer)
+    def apply(t)
       return t.transform(self)
     end
   end
@@ -27,14 +27,14 @@ module Chalk
   class TreeId < Tree
     property id : String
 
-    def initialize(@id : String)
+    def initialize(@id)
     end
   end
 
   class TreeLit < Tree
     property lit : Int64
 
-    def initialize(@lit : Int64)
+    def initialize(@lit)
     end
   end
 
@@ -42,16 +42,16 @@ module Chalk
     property name : String
     property params : Array(Tree)
 
-    def initialize(@name : String, @params : Array(Tree))
+    def initialize(@name, @params)
     end
 
-    def accept(v : Visitor)
+    def accept(v)
       v.visit(self)
       @params.each &.accept(v)
       v.finish(self)
     end
 
-    def apply(t : Transformer)
+    def apply(t)
       @params.map! do |param|
         param.apply(t)
       end
@@ -64,17 +64,17 @@ module Chalk
     property left : Tree
     property right : Tree
 
-    def initialize(@op : TokenType, @left : Tree, @right : Tree)
+    def initialize(@op, @left, @right)
     end
 
-    def accept(v : Visitor)
+    def accept(v)
       v.visit(self)
       @left.accept(v)
       @right.accept(v)
       v.finish(self)
     end
 
-    def apply(t : Transformer)
+    def apply(t)
       @left = @left.apply(t)
       @right = @right.apply(t)
       return t.transform(self)
@@ -84,16 +84,16 @@ module Chalk
   class TreeBlock < Tree
     property children : Array(Tree)
 
-    def initialize(@children : Array(Tree))
+    def initialize(@children)
     end
 
-    def accept(v : Visitor)
+    def accept(v)
       v.visit(self)
       @children.each &.accept(v)
       v.finish(self)
     end
 
-    def apply(t : Transformer)
+    def apply(t)
       @children.map! do |child|
         child.apply(t)
       end
@@ -106,16 +106,16 @@ module Chalk
     property params : Array(String)
     property block : Tree
 
-    def initialize(@name : String, @params : Array(String), @block : Tree)
+    def initialize(@name, @params, @block)
     end
 
-    def accept(v : Visitor)
+    def accept(v)
       v.visit(self)
       @block.accept(v)
       v.finish(self)
     end
 
-    def apply(t : Transformer)
+    def apply(t)
       @block = @block.apply(t)
       return t.transform(self)
     end
@@ -125,16 +125,16 @@ module Chalk
     property name : String
     property expr : Tree
 
-    def initialize(@name : String, @expr : Tree)
+    def initialize(@name, @expr)
     end
 
-    def accept(v : Visitor)
+    def accept(v)
       v.visit(self)
       @expr.accept(v)
       v.finish(self)
     end
 
-    def apply(t : Transformer)
+    def apply(t)
       @expr = @expr.apply(t)
       return t.transform(self)
     end
@@ -144,16 +144,16 @@ module Chalk
     property name : String
     property expr : Tree
 
-    def initialize(@name : String, @expr : Tree)
+    def initialize(@name, @expr)
     end
 
-    def accept(v : Visitor)
+    def accept(v)
       v.visit(self)
       @expr.accept(v)
       v.finish(self)
     end
 
-    def apply(t : Transformer)
+    def apply(t)
       @expr = @expr.apply(t)
       return t.transform(self)
     end
@@ -164,10 +164,10 @@ module Chalk
     property block : Tree
     property otherwise : Tree?
 
-    def initialize(@condition : Tree, @block : Tree, @otherwise : Tree? = nil)
+    def initialize(@condition, @block, @otherwise = nil)
     end
 
-    def accept(v : Visitor)
+    def accept(v)
       v.visit(self)
       @condition.accept(v)
       @block.accept(v)
@@ -175,7 +175,7 @@ module Chalk
       v.finish(self)
     end
 
-    def apply(t : Transformer)
+    def apply(t)
       @condition = @condition.apply(t)
       @block = @block.apply(t)
       @otherwise = @otherwise.try &.apply(t)
@@ -187,17 +187,17 @@ module Chalk
     property condition : Tree
     property block : Tree
 
-    def initialize(@condition : Tree, @block : Tree)
+    def initialize(@condition, @block)
     end
 
-    def accept(v : Visitor)
+    def accept(v)
       v.visit(self)
       @condition.accept(v)
       @block.accept(v)
       v.finish(self)
     end
 
-    def apply(t : Transformer)
+    def apply(t)
       @condition = @condition.apply(t)
       @block = @block.apply(t)
       return t.transform(self)
@@ -207,16 +207,16 @@ module Chalk
   class TreeReturn < Tree
     property rvalue : Tree
 
-    def initialize(@rvalue : Tree)
+    def initialize(@rvalue)
     end
 
-    def accept(v : Visitor)
+    def accept(v)
       v.visit(self)
       @rvalue.accept(v)
       v.finish(self)
     end
 
-    def apply(t : Transformer)
+    def apply(t)
       @rvalue = @rvalue.apply(t)
       return t.transform(self)
     end

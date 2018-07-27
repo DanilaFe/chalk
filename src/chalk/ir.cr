@@ -8,7 +8,7 @@ module Chalk
     property register : Int32
     property value : Int32
 
-    def initialize(@register : Int32, @value : Int32)
+    def initialize(@register, @value)
     end
 
     def to_s(io)
@@ -22,7 +22,7 @@ module Chalk
     property into : Int32
     property from : Int32
 
-    def initialize(@into : Int32, @from : Int32)
+    def initialize(@into, @from)
     end
 
     def to_s(io)
@@ -38,8 +38,7 @@ module Chalk
     property into : Int32
     property value : Int32
 
-    def initialize(@op : TokenType, @into : Int32,
-                   @value : Int32)
+    def initialize(@op, @into, @value)
     end
 
     def to_s(io)
@@ -54,7 +53,7 @@ module Chalk
     property into : Int32
     property from : Int32
 
-    def initialize(@op : TokenType, @into : Int32, @from : Int32)
+    def initialize(@op, @into, @from)
     end
 
     def to_s(io)
@@ -68,7 +67,7 @@ module Chalk
   class StoreInstruction < Instruction
     property up_to : Int32
 
-    def initialize(@up_to : Int32)
+    def initialize(@up_to)
     end
 
     def to_s(io)
@@ -80,7 +79,7 @@ module Chalk
   class RestoreInstruction < Instruction
     property up_to : Int32
 
-    def initialize(@up_to : Int32)
+    def initialize(@up_to)
     end
 
     def to_s(io)
@@ -92,7 +91,7 @@ module Chalk
   class ReturnInstruction < Instruction
     property to_return : Int32
 
-    def initialize(@to_return : Int32)
+    def initialize(@to_return)
     end
 
     def to_s(io)
@@ -100,4 +99,36 @@ module Chalk
       @to_return.to_s(16, io)
     end
   end
+
+  class JumpEqInstruction < Instruction
+    property offset : Int32
+    property left : Int32
+    property right : Int32
+
+    def initialize(@offset, @left, @right)
+    end
+
+    def to_s(io)
+      io << "jeq " << offset << " R"
+      @left.to_s(16, io)
+      io << " " << right
+    end
+  end
+
+  class JumpEqRegInstruction < Instruction
+    property offset : Int32
+    property left : Int32
+    property right : Int32
+
+    def initialize(@offset, @left, @right)
+    end
+
+    def to_s(io)
+      io << "jeq " << offset << " R"
+      @left.to_s(16, io)
+      io << " R"
+      @right.to_s(16, io)
+    end
+  end
+  
 end

@@ -40,11 +40,15 @@ module Chalk
     end
 
     private def generate_code(trees, table)
+      code = {} of String => Array(Instruction)
       trees.each do |tree|
-        generator = CodeGenerator.new table
-        instructions = generator.generate tree.as(TreeFunction).block
-        instructions.each { |it| puts it }
+        tree = tree.as(TreeFunction)
+        generator = CodeGenerator.new table, tree
+        @logger.debug("Generating code for #{tree.name}")
+        instructions = generator.generate!
+        code[tree.name] = instructions
       end
+      return code
     end
 
     private def run_tree
@@ -57,7 +61,13 @@ module Chalk
     private def run_intermediate
       trees = create_trees(@config.file)
       table = process_initial(trees)
-      generate_code(trees, table)
+      raise "No main function!" unless table["main"]?
+      code = generate_code(trees, table)
+      code.each do |name, insts|
+        puts "Code for #{name}:"
+        insts.each { |it| puts it }
+        puts "-----"
+      end
     end
 
     private def run_binary
