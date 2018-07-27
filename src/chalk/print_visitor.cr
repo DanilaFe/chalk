@@ -48,16 +48,16 @@ module Chalk
     end
 
     macro forward(text, type)
-            def visit(tree : {{type}})
-                print_indent
-                @stream << {{text}} << "\n"
-                @indent += 1
-            end
+      def visit(tree : {{type}})
+        print_indent
+        @stream << {{text}} << "\n"
+        @indent += 1
+      end
 
-            def finish(tree : {{type}})
-                @indent -= 1
-            end
-        end
+      def finish(tree : {{type}})
+        @indent -= 1
+      end
+    end
 
     forward("[call]", TreeCall)
     forward("[block]", TreeBlock)
@@ -66,5 +66,11 @@ module Chalk
     forward("[if]", TreeIf)
     forward("[while]", TreeWhile)
     forward("[return]", TreeReturn)
+  end
+
+  class Tree
+    def to_s(io)
+      accept(PrintVisitor.new io)
+    end
   end
 end

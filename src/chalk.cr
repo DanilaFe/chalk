@@ -1,12 +1,11 @@
 require "./chalk/*"
+require "option_parser"
 
 module Chalk
-  lexer = Lexer.new
-  parser = Parser.new
+  config = Config.parse!
+  exit unless config.validate!
 
-  tokens = lexer.lex(File.read("test.txt"))
-  trees = parser.parse?(tokens)
-  trees.try do |trees|
-      trees.each { |tree| puts tree }
-  end
+  generator = CodeGenerator.new (Table.new)
+  compiler = Compiler.new config
+  compiler.run
 end
