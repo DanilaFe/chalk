@@ -2,6 +2,9 @@ require "./ir.cr"
 
 module Chalk
   class CodeGenerator
+    RETURN_REG = 14
+    STACK_REG = 13
+
     def initialize(table, @function : TreeFunction)
       @registers = 0
       @instructions = [] of Instruction
@@ -26,13 +29,25 @@ module Chalk
     end
 
     private def op(op, into, from)
+      inst = OpInstruction.new op, into, from
+      @instructions << inst
+      return inst
+    end
+
+    private def opr(op, into, from)
       inst = OpRegInstruction.new op, into, from
       @instructions << inst
       return inst
     end
 
-    private def jeq(rel, l, r)
-      inst = JumpEqRegInstruction.new rel, l, r
+    private def sne(l, r)
+      inst = SkipNeInstruction.new l, r
+      @instructions << inst
+      return inst
+    end
+
+    private def jr(o)
+      inst = JumpRelativeInstruction.new o
       @instructions << inst
       return inst
     end
@@ -49,14 +64,26 @@ module Chalk
       return inst
     end
 
-    private def ret(reg)
-      inst = ReturnInstruction.new reg
+    private def ret
+      inst = ReturnInstruction.new
       @instructions << inst
       return inst
     end
 
     private def call(func)
       inst = CallInstruction.new func
+      @instructions << inst
+      return inst
+    end
+
+    def setis
+      inst = SetIStackInstruction.new 
+      @instructions << inst
+      return inst
+    end
+
+    def addi(reg)
+      inst = AddIRegInstruction.new reg
       @instructions << inst
       return inst
     end
@@ -73,7 +100,7 @@ module Chalk
       when TreeOp
         generate! tree.left, table, target, free
         generate! tree.right, table, free, free + 1
-        op tree.op, target, free
+        opr tree.op, target, free
       when TreeCall
         entry = table[tree.name]?
         raise "Unknown function" unless entry &&
@@ -81,16 +108,38 @@ module Chalk
         raise "Invalid call" if tree.params.size != entry.function.params.size
 
         start_at = free
+        # Move I to stack
+        setis
+        # Get to correct stack position
+        addi STACK_REG
+        # Store variables
         store (start_at - 1) unless start_at == 0
+        # Increment I and stack position
+        load free, start_at
+        opr TokenType::OpAdd, STACK_REG, free
+        addi free
+
+        # Calculate the parameters
         tree.params.each do |param|
           generate! param, table, free, free + 1
           free += 1
         end
+        # Call the function
         tree.params.size.times do |time|
           loadr time, time + start_at
         end
         call tree.name
+
+        # Reduce stack pointer
+        op TokenType::OpSub, STACK_REG, start_at
+        # Move I to stack
+        setis
+        # Get to correct stack position
+        addi STACK_REG
+        # Restore
         restore (start_at - 1) unless start_at == 0
+        # Get call value into target
+        loadr target, RETURN_REG
       when TreeBlock
         table = Table.new(table)
         tree.children.each do |child|
@@ -112,17 +161,20 @@ module Chalk
         generate! tree.expr, table, entry.register, free
       when TreeIf
         generate! tree.condition, table, target, free
-        load free, 0
-        jump_inst = jeq 0, target, free
+        sne target, 0
+        jump_inst = jr 0
 
         old_size = @instructions.size
         generate! tree.block, table, free, free + 1
+        jump_after = jr 0
         jump_inst.offset = @instructions.size - old_size + 1
 
+        old_size = @instructions.size
         generate! tree.otherwise, table, free, free + 1 if tree.otherwise
+        jump_after.offset = @instructions.size - old_size + 1
       when TreeReturn
-        generate! tree.rvalue, table, free, free + 1
-        ret free
+        generate! tree.rvalue, table, RETURN_REG, free
+        ret
       end
       return 0
     end
@@ -148,8 +200,7 @@ module Chalk
     private def optimize!
       block_boundaries = [ @instructions.size ]
       @instructions.each_with_index do |inst, i|
-        if inst.is_a?(JumpEqRegInstruction) ||
-           inst.is_a?(JumpEqInstruction)
+        if inst.is_a?(JumpRelativeInstruction)
             block_boundaries << (inst.offset + i)
         end
       end

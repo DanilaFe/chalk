@@ -89,14 +89,11 @@ module Chalk
   end
 
   class ReturnInstruction < Instruction
-    property to_return : Int32
-
-    def initialize(@to_return)
+    def initialize()
     end
 
     def to_s(io)
-      io << "return R"
-      @to_return.to_s(16, io)
+      io << "return"
     end
   end
 
@@ -115,16 +112,69 @@ module Chalk
     end
   end
 
-  class JumpEqRegInstruction < Instruction
+  class JumpRelativeInstruction < Instruction
     property offset : Int32
-    property left : Int32
-    property right : Int32
 
-    def initialize(@offset, @left, @right)
+    def initialize(@offset)
     end
 
     def to_s(io)
-      io << "jeq " << offset << " R"
+      io << "jr " << @offset
+    end
+  end
+
+  class SkipEqInstruction < Instruction
+    property left : Int32
+    property right : Int32
+
+    def initialize(@left, @right)
+    end
+
+    def to_s(io)
+      io << "seq R"
+      @left.to_s(16, io)
+      io << " " << right
+    end
+  end
+
+  class SkipNeInstruction < Instruction
+    property left : Int32
+    property right : Int32
+
+    def initialize(@left, @right)
+    end
+
+    def to_s(io)
+      io << "sne R"
+      @left.to_s(16, io)
+      io << " " << right
+    end
+  end
+
+  class SkipRegEqInstruction < Instruction
+    property left : Int32
+    property right : Int32
+
+    def initialize(@left, @right)
+    end
+
+    def to_s(io)
+      io << "seqr R"
+      @left.to_s(16, io)
+      io << " R"
+      @right.to_s(16, io)
+    end
+  end
+
+  class SkipRegNeInstruction < Instruction
+    property left : Int32
+    property right : Int32
+
+    def initialize(@left, @right)
+    end
+
+    def to_s(io)
+      io << "sner R"
       @left.to_s(16, io)
       io << " R"
       @right.to_s(16, io)
@@ -138,8 +188,36 @@ module Chalk
     end
 
     def to_s(io)
-      io << "call " << name
+      io << "call " << @name
     end
   end
   
+  class SetIInstruction < Instruction
+    property value : Int32
+
+    def initialize(@value)
+    end
+
+    def to_s(io)
+      io << "seti " << @value
+    end
+  end
+
+  class SetIStackInstruction < Instruction
+    def to_s(io)
+      io << "setis"
+    end
+  end
+
+  class AddIRegInstruction < Instruction
+    property reg : Int32
+
+    def initialize(@reg)
+    end
+
+    def to_s(io)
+      io << "addi R"
+      reg.to_s(16, io)
+    end
+  end
 end
