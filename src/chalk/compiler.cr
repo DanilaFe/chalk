@@ -26,8 +26,8 @@ module Chalk
         @logger.debug("Beginning constant folding")
         folder = ConstantFolder.new
         trees.map! do |tree|
-            @logger.debug("Constant folding #{tree.name}")
-            tree.apply(folder).as(TreeFunction)
+          @logger.debug("Constant folding #{tree.name}")
+          tree.apply(folder).as(TreeFunction)
         end
         @logger.debug("Done constant folding")
         return trees
@@ -47,9 +47,9 @@ module Chalk
     end
 
     private def create_code(tree : TreeFunction, table)
-        generator = CodeGenerator.new table, tree
-        @logger.debug("Generating code for #{tree.name}")
-        return generator.generate!
+      generator = CodeGenerator.new table, tree
+      @logger.debug("Generating code for #{tree.name}")
+      return generator.generate!
     end
 
     private def create_code(trees : Array(TreeFunction), table)
@@ -82,32 +82,32 @@ module Chalk
       context = InstructionContext.new table, instructions.size
       binary = instructions.map_with_index { |it, i| it.to_bin(context, i).to_u16 }
       binary.each do |inst|
-          first = (inst >> 8).to_u8
-          dest.write_byte(first)
-          second = (inst & 0xff).to_u8
-          dest.write_byte(second)
+        first = (inst >> 8).to_u8
+        dest.write_byte(first)
+        second = (inst & 0xff).to_u8
+        dest.write_byte(second)
       end
     end
 
     private def collect_calls(table)
-        open = Set(String).new
-        done = Set(String).new
+      open = Set(String).new
+      done = Set(String).new
 
-        open << "main"
-        while !open.empty?
-            first = open.first
-            open.delete first
-            done << first
+      open << "main"
+      while !open.empty?
+        first = open.first
+        open.delete first
+        done << first
 
-            entry = table[first]?
-            raise "Unknown function" unless entry && entry.is_a?(FunctionEntry)
-            next unless entry.function.is_a?(TreeFunction)
+        entry = table[first]?
+        raise "Unknown function" unless entry && entry.is_a?(FunctionEntry)
+        next unless entry.function.is_a?(TreeFunction)
 
-            visitor = CallVisitor.new
-            entry.function.accept(visitor)
-            open.concat(visitor.calls - done)
-        end
-        return done
+        visitor = CallVisitor.new
+        entry.function.accept(visitor)
+        open.concat(visitor.calls - done)
+      end
+      return done
     end
 
     private def run_binary

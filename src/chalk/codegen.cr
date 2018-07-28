@@ -5,7 +5,7 @@ module Chalk
   class CodeGenerator
     include Emitter
     RETURN_REG = 14
-    STACK_REG = 13
+    STACK_REG  = 13
 
     def initialize(table, @function : TreeFunction)
       @registers = 0

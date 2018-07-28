@@ -8,11 +8,11 @@ module Chalk
   end
 
   class InstructionContext
-      property table : Table
-      property stack : Int32
+    property table : Table
+    property stack : Int32
 
-      def initialize(@table, @stack)
-      end
+    def initialize(@table, @stack)
+    end
   end
 
   class LoadInstruction < Instruction
@@ -29,7 +29,7 @@ module Chalk
     end
 
     def to_bin(i, index)
-        0x6000 | (register << 8) | value
+      0x6000 | (register << 8) | value
     end
   end
 
@@ -48,7 +48,7 @@ module Chalk
     end
 
     def to_bin(i, index)
-        0x8000 | (into << 8) | (from << 4)
+      0x8000 | (into << 8) | (from << 4)
     end
   end
 
@@ -67,12 +67,12 @@ module Chalk
     end
 
     def to_bin(i, index)
-        case op
-        when TokenType::OpAdd
-            return 0x7000 | (into << 8) | value
-        else
-            raise "Invalid instruction"
-        end
+      case op
+      when TokenType::OpAdd
+        return 0x7000 | (into << 8) | value
+      else
+        raise "Invalid instruction"
+      end
     end
   end
 
@@ -92,22 +92,22 @@ module Chalk
     end
 
     def to_bin(i, index)
-        code = 0
-        case op
-        when TokenType::OpAdd
-            code = 4
-        when TokenType::OpSub
-            code = 5
-        when TokenType::OpOr
-            code = 1
-        when TokenType::OpAnd
-            code = 2
-        when TokenType::OpXor
-            code = 3
-        else
-            raise "Invalid instruction"
-        end
-        return 0x8000 | (into << 8) | (from << 4) | code
+      code = 0
+      case op
+      when TokenType::OpAdd
+        code = 4
+      when TokenType::OpSub
+        code = 5
+      when TokenType::OpOr
+        code = 1
+      when TokenType::OpAnd
+        code = 2
+      when TokenType::OpXor
+        code = 3
+      else
+        raise "Invalid instruction"
+      end
+      return 0x8000 | (into << 8) | (from << 4) | code
     end
   end
 
@@ -123,7 +123,7 @@ module Chalk
     end
 
     def to_bin(i, index)
-        return 0xf055 | (up_to << 8)
+      return 0xf055 | (up_to << 8)
     end
   end
 
@@ -139,12 +139,12 @@ module Chalk
     end
 
     def to_bin(i, index)
-        return 0xf065 | (up_to << 8)
+      return 0xf065 | (up_to << 8)
     end
   end
 
   class ReturnInstruction < Instruction
-    def initialize()
+    def initialize
     end
 
     def to_s(io)
@@ -152,7 +152,7 @@ module Chalk
     end
 
     def to_bin(i, index)
-        return 0x00ee
+      return 0x00ee
     end
   end
 
@@ -167,7 +167,7 @@ module Chalk
     end
 
     def to_bin(i, index)
-        return 0x1000 | ((offset + index) * 2 + 0x200)
+      return 0x1000 | ((offset + index) * 2 + 0x200)
     end
   end
 
@@ -185,7 +185,7 @@ module Chalk
     end
 
     def to_bin(i, index)
-        return 0x3000 | (left << 8) | right
+      return 0x3000 | (left << 8) | right
     end
   end
 
@@ -203,7 +203,7 @@ module Chalk
     end
 
     def to_bin(i, index)
-        return 0x4000 | (left << 8) | right
+      return 0x4000 | (left << 8) | right
     end
   end
 
@@ -222,7 +222,7 @@ module Chalk
     end
 
     def to_bin(i, index)
-        return 0x5000 | (left << 8) | (right << 4)
+      return 0x5000 | (left << 8) | (right << 4)
     end
   end
 
@@ -241,7 +241,7 @@ module Chalk
     end
 
     def to_bin(i, index)
-        return 0x9000 | (left << 8) | (right << 4)
+      return 0x9000 | (left << 8) | (right << 4)
     end
   end
 
@@ -256,17 +256,17 @@ module Chalk
     end
 
     def to_bin(i, index)
-        return 0x2000 | (i.table[name]?.as(FunctionEntry).addr * 2 + 0x200)
+      return 0x2000 | (i.table[name]?.as(FunctionEntry).addr * 2 + 0x200)
     end
   end
-  
+
   class SetIStackInstruction < Instruction
     def to_s(io)
       io << "setis"
     end
 
     def to_bin(i, index)
-        return 0xa000 | (i.stack * 2 + 0x200)
+      return 0xa000 | (i.stack * 2 + 0x200)
     end
   end
 
@@ -282,7 +282,7 @@ module Chalk
     end
 
     def to_bin(i, index)
-        return 0xf000 | (reg << 8) | 0x1e
+      return 0xf000 | (reg << 8) | 0x1e
     end
   end
 end
