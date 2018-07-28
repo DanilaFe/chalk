@@ -46,14 +46,16 @@ module Chalk
       return table
     end
 
-    private def create_code(trees, table)
-      code = {} of String => Array(Instruction)
-      trees.each do |tree|
-        tree = tree.as(TreeFunction)
+    private def create_code(tree : TreeFunction, table)
         generator = CodeGenerator.new table, tree
         @logger.debug("Generating code for #{tree.name}")
-        instructions = generator.generate!
-        code[tree.name] = instructions
+        return generator.generate!
+    end
+
+    private def create_code(trees : Array(TreeFunction), table)
+      code = {} of String => Array(Instruction)
+      trees.each do |tree|
+        code[tree.name] = create_code(tree, table)
       end
       return code
     end
@@ -87,20 +89,46 @@ module Chalk
       end
     end
 
+    private def collect_calls(table)
+        open = Set(String).new
+        done = Set(String).new
+
+        open << "main"
+        while !open.empty?
+            first = open.first
+            open.delete first
+            done << first
+
+            entry = table[first]?
+            raise "Unknown function" unless entry && entry.is_a?(FunctionEntry)
+            next unless entry.function.is_a?(TreeFunction)
+
+            visitor = CallVisitor.new
+            entry.function.accept(visitor)
+            open.concat(visitor.calls - done)
+        end
+        return done
+    end
+
     private def run_binary
       all_instructions = [] of Instruction
       trees = create_trees(@config.file)
       table = create_table(trees)
-      code = create_code(trees, table)
-      all_instructions.concat code["main"]
-      table["main"]?.as(FunctionEntry).addr = 0
+      names = collect_calls(table)
+      names.delete "main"
+
+      main_entry = table["main"]?.as(FunctionEntry)
+      all_instructions.concat create_code(main_entry.function, table)
+      main_entry.addr = 0
       all_instructions << JumpRelativeInstruction.new 0
-      code.delete "main"
-      code.each do |key, value|
-          table[key]?.as(FunctionEntry).addr = all_instructions.size
-        all_instructions.concat(value)
+
+      names.each do |name|
+        entry = table[name]?.as(FunctionEntry)
+        entry.addr = all_instructions.size
+        all_instructions.concat create_code(entry.function, table)
         all_instructions << ReturnInstruction.new
       end
+
       file = File.open("out.ch8", "w")
       generate_binary(table, all_instructions, file)
       file.close
