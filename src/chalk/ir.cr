@@ -130,5 +130,16 @@ module Chalk
       @right.to_s(16, io)
     end
   end
+
+  class CallInstruction < Instruction
+    property name : String
+
+    def initialize(@name)
+    end
+
+    def to_s(io)
+      io << "call " << name
+    end
+  end
   
 end

@@ -3,13 +3,13 @@ require "./ir.cr"
 module Chalk
   class CodeGenerator
     def initialize(table, @function : TreeFunction)
-      @register = 0
+      @registers = 0
       @instructions = [] of Instruction
       @table = Table.new table
 
       @function.params.each do |param|
-        @table[param] = VarEntry.new @register
-        @register += 1
+        @table[param] = VarEntry.new @registers
+        @registers += 1
       end
     end
 
@@ -50,68 +50,81 @@ module Chalk
     end
 
     private def ret(reg)
-      inst =  ReturnInstruction.new reg
+      inst = ReturnInstruction.new reg
       @instructions << inst
       return inst
     end
 
-    def generate!(tree, target)
+    private def call(func)
+      inst = CallInstruction.new func
+      @instructions << inst
+      return inst
+    end
+
+    def generate!(tree, table, target, free)
       case tree
       when TreeId
-        entry = @table[tree.id]?
+        entry = table[tree.id]?
         raise "Unknown variable" unless entry &&
                                         entry.is_a?(VarEntry)
         loadr target, entry.register
       when TreeLit
         load target, tree.lit
       when TreeOp
-        into = @register
-        @register += 1
-        generate! tree.left, target
-        generate! tree.right, into
-        @register -= 1
-        op tree.op, target, into
-      when TreeBlock
-        register = @register
-        tree.children.each do |child|
-          generate! child, @register
+        generate! tree.left, table, target, free
+        generate! tree.right, table, free, free + 1
+        op tree.op, target, free
+      when TreeCall
+        entry = table[tree.name]?
+        raise "Unknown function" unless entry &&
+                                        entry.is_a?(FunctionEntry)
+        raise "Invalid call" if tree.params.size != entry.function.params.size
+
+        start_at = free
+        store (start_at - 1) unless start_at == 0
+        tree.params.each do |param|
+          generate! param, table, free, free + 1
+          free += 1
         end
-        @register = register
+        tree.params.size.times do |time|
+          loadr time, time + start_at
+        end
+        call tree.name
+        restore (start_at - 1) unless start_at == 0
+      when TreeBlock
+        table = Table.new(table)
+        tree.children.each do |child|
+          free += generate! child, table, free, free
+        end
       when TreeVar
-        entry = @table[tree.name]?
+        entry = table[tree.name]?
         if entry == nil
-          entry = VarEntry.new @register
-          @register += 1
-          @table[tree.name] = entry
+          entry = VarEntry.new free
+          table[tree.name] = entry
         end
         raise "Unknown variable" unless entry.is_a?(VarEntry)
-        generate! tree.expr, entry.register
+        generate! tree.expr, table, entry.register, free + 1
+        return 1
       when TreeAssign
-        entry = @table[tree.name]?
+        entry = table[tree.name]?
         raise "Unknown variable" unless entry &&
                                         entry.is_a?(VarEntry)
-        generate! tree.expr, entry.register
+        generate! tree.expr, table, entry.register, free
       when TreeIf
-        cond_target = @register
-        @register += 1
-
-        generate! tree.condition, cond_target
-        load cond_target + 1, 0
-        jump_inst = jeq 0, cond_target, cond_target + 1
-        @register -= 1
+        generate! tree.condition, table, target, free
+        load free, 0
+        jump_inst = jeq 0, target, free
 
         old_size = @instructions.size
-        generate! tree.block, @register
+        generate! tree.block, table, free, free + 1
         jump_inst.offset = @instructions.size - old_size + 1
 
-        generate! tree.otherwise, @register if tree.otherwise
+        generate! tree.otherwise, table, free, free + 1 if tree.otherwise
       when TreeReturn
-        into = @register
-        @register += 1
-        generate! tree.rvalue, into
-        @register -= 1
-        ret into
+        generate! tree.rvalue, table, free, free + 1
+        ret free
       end
+      return 0
     end
 
     private def check_dead(inst)
@@ -152,7 +165,7 @@ module Chalk
     end
 
     def generate!
-      generate!(@function.block, @register)
+      generate!(@function.block, @table, -1, @registers)
       optimize!
       return @instructions
     end
