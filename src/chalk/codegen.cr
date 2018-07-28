@@ -131,7 +131,8 @@ module Chalk
         call tree.name
 
         # Reduce stack pointer
-        op TokenType::OpSub, STACK_REG, start_at
+        load free, start_at
+        opr TokenType::OpSub, STACK_REG, free
         # Move I to stack
         setis
         # Get to correct stack position

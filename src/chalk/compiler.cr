@@ -58,11 +58,15 @@ module Chalk
       end
     end
 
-    private def run_intermediate
+    private def generate_ir
       trees = create_trees(@config.file)
       table = process_initial(trees)
       raise "No main function!" unless table["main"]?
-      code = generate_code(trees, table)
+      return { table, generate_code(trees, table) }
+    end
+
+    private def run_intermediate
+      table, code = generate_ir
       code.each do |name, insts|
         puts "Code for #{name}:"
         insts.each { |it| puts it }
@@ -70,7 +74,31 @@ module Chalk
       end
     end
 
+    private def generate_binary(instructions)
+    end
+
     private def run_binary
+      all_instructions = [] of Instruction
+      table, code = generate_ir
+      all_instructions.concat code["main"]
+      table["main"]?.as(FunctionEntry).addr = 0
+      all_instructions << JumpRelativeInstruction.new 0
+      code.delete "main"
+      code.each do |key, value|
+          table[key]?.as(FunctionEntry).addr = all_instructions.size
+        all_instructions.concat(value)
+        all_instructions << ReturnInstruction.new
+      end
+      context = InstructionContext.new table, all_instructions.size
+      binary = all_instructions.map_with_index { |it, i| it.to_bin(context, i).to_u16 }
+      file = File.open("out.ch8", "w")
+      binary.each do |inst|
+          first = (inst >> 8).to_u8
+          file.write_byte(first)
+          second = (inst & 0xff).to_u8
+          file.write_byte(second)
+      end
+      file.close
     end
 
     def run

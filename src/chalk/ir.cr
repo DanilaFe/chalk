@@ -2,6 +2,17 @@ require "./lexer.cr"
 
 module Chalk
   class Instruction
+    def to_bin(i, index)
+      return 0
+    end
+  end
+
+  class InstructionContext
+      property table : Table
+      property stack : Int32
+
+      def initialize(@table, @stack)
+      end
   end
 
   class LoadInstruction < Instruction
@@ -15,6 +26,10 @@ module Chalk
       io << "load R"
       @register.to_s(16, io)
       io << " " << @value
+    end
+
+    def to_bin(i, index)
+        0x6000 | (register << 8) | value
     end
   end
 
@@ -31,6 +46,10 @@ module Chalk
       io << " R"
       @from.to_s(16, io)
     end
+
+    def to_bin(i, index)
+        0x8000 | (into << 8) | (from << 4)
+    end
   end
 
   class OpInstruction < Instruction
@@ -45,6 +64,15 @@ module Chalk
       io << "op " << op << " R"
       @into.to_s(16, io)
       io << " " << @value
+    end
+
+    def to_bin(i, index)
+        case op
+        when TokenType::OpAdd
+            return 0x7000 | (into << 8) | value
+        else
+            raise "Invalid instruction"
+        end
     end
   end
 
@@ -62,6 +90,25 @@ module Chalk
       io << " R"
       @from.to_s(16, io)
     end
+
+    def to_bin(i, index)
+        code = 0
+        case op
+        when TokenType::OpAdd
+            code = 4
+        when TokenType::OpSub
+            code = 5
+        when TokenType::OpOr
+            code = 1
+        when TokenType::OpAnd
+            code = 2
+        when TokenType::OpXor
+            code = 3
+        else
+            raise "Invalid instruction"
+        end
+        return 0x8000 | (into << 8) | (from << 4) | code
+    end
   end
 
   class StoreInstruction < Instruction
@@ -73,6 +120,10 @@ module Chalk
     def to_s(io)
       io << "store R"
       @up_to.to_s(16, io)
+    end
+
+    def to_bin(i, index)
+        return 0xf055 | (up_to << 8)
     end
   end
 
@@ -86,6 +137,10 @@ module Chalk
       io << "restore R"
       @up_to.to_s(16, io)
     end
+
+    def to_bin(i, index)
+        return 0xf065 | (up_to << 8)
+    end
   end
 
   class ReturnInstruction < Instruction
@@ -95,20 +150,9 @@ module Chalk
     def to_s(io)
       io << "return"
     end
-  end
 
-  class JumpEqInstruction < Instruction
-    property offset : Int32
-    property left : Int32
-    property right : Int32
-
-    def initialize(@offset, @left, @right)
-    end
-
-    def to_s(io)
-      io << "jeq " << offset << " R"
-      @left.to_s(16, io)
-      io << " " << right
+    def to_bin(i, index)
+        return 0x00ee
     end
   end
 
@@ -120,6 +164,10 @@ module Chalk
 
     def to_s(io)
       io << "jr " << @offset
+    end
+
+    def to_bin(i, index)
+        return 0x1000 | ((offset + index) * 2 + 0x200)
     end
   end
 
@@ -135,6 +183,10 @@ module Chalk
       @left.to_s(16, io)
       io << " " << right
     end
+
+    def to_bin(i, index)
+        return 0x3000 | (left << 8) | right
+    end
   end
 
   class SkipNeInstruction < Instruction
@@ -148,6 +200,10 @@ module Chalk
       io << "sne R"
       @left.to_s(16, io)
       io << " " << right
+    end
+
+    def to_bin(i, index)
+        return 0x4000 | (left << 8) | right
     end
   end
 
@@ -164,6 +220,10 @@ module Chalk
       io << " R"
       @right.to_s(16, io)
     end
+
+    def to_bin(i, index)
+        return 0x5000 | (left << 8) | (right << 4)
+    end
   end
 
   class SkipRegNeInstruction < Instruction
@@ -179,6 +239,10 @@ module Chalk
       io << " R"
       @right.to_s(16, io)
     end
+
+    def to_bin(i, index)
+        return 0x9000 | (left << 8) | (right << 4)
+    end
   end
 
   class CallInstruction < Instruction
@@ -190,22 +254,19 @@ module Chalk
     def to_s(io)
       io << "call " << @name
     end
+
+    def to_bin(i, index)
+        return 0x2000 | (i.table[name]?.as(FunctionEntry).addr * 2 + 0x200)
+    end
   end
   
-  class SetIInstruction < Instruction
-    property value : Int32
-
-    def initialize(@value)
-    end
-
-    def to_s(io)
-      io << "seti " << @value
-    end
-  end
-
   class SetIStackInstruction < Instruction
     def to_s(io)
       io << "setis"
+    end
+
+    def to_bin(i, index)
+        return 0xa000 | (i.stack * 2 + 0x200)
     end
   end
 
@@ -218,6 +279,10 @@ module Chalk
     def to_s(io)
       io << "addi R"
       reg.to_s(16, io)
+    end
+
+    def to_bin(i, index)
+        return 0xf000 | (reg << 8) | 0x1e
     end
   end
 end
