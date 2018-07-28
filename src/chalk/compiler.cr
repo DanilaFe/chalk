@@ -43,6 +43,9 @@ module Chalk
         table[tree.name] = FunctionEntry.new tree
       end
       @logger.debug("Done creating symbol table")
+
+      table["draw"] = FunctionEntry.new InlineDrawFunction.new
+      table["get_key"] = FunctionEntry.new InlineAwaitKeyFunction.new
       return table
     end
 
@@ -50,6 +53,12 @@ module Chalk
       generator = CodeGenerator.new table, tree
       @logger.debug("Generating code for #{tree.name}")
       return generator.generate!
+    end
+
+    private def create_code(tree : BuiltinFunction, table)
+      instructions = [] of Instruction
+      tree.generate!(instructions)
+      return instructions
     end
 
     private def create_code(trees : Array(TreeFunction), table)
@@ -97,14 +106,16 @@ module Chalk
       while !open.empty?
         first = open.first
         open.delete first
-        done << first
 
         entry = table[first]?
         raise "Unknown function" unless entry && entry.is_a?(FunctionEntry)
-        next unless entry.function.is_a?(TreeFunction)
+        function = entry.function
+        next if function.is_a?(InlineFunction)
+        done << first
+        next unless function.is_a?(TreeFunction)
 
         visitor = CallVisitor.new
-        entry.function.accept(visitor)
+        function.accept(visitor)
         open.concat(visitor.calls - done)
       end
       return done
@@ -118,14 +129,16 @@ module Chalk
       names.delete "main"
 
       main_entry = table["main"]?.as(FunctionEntry)
-      all_instructions.concat create_code(main_entry.function, table)
+      all_instructions.concat create_code(main_entry.function.as(TreeFunction), table)
       main_entry.addr = 0
       all_instructions << JumpRelativeInstruction.new 0
 
       names.each do |name|
         entry = table[name]?.as(FunctionEntry)
         entry.addr = all_instructions.size
-        all_instructions.concat create_code(entry.function, table)
+        function = entry.function
+        raise "Trying to compile inlined function" if function.is_a?(InlineFunction)
+        all_instructions.concat create_code(function, table)
         all_instructions << ReturnInstruction.new
       end
 

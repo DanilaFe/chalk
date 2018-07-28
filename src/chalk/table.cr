@@ -3,7 +3,7 @@ module Chalk
   end
 
   class FunctionEntry < Entry
-    property function : TreeFunction
+    property function : TreeFunction | BuiltinFunction | InlineFunction
     property addr : Int32
 
     def initialize(@function, @addr = -1)

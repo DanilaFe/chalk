@@ -109,6 +109,10 @@ module Chalk
     def initialize(@name, @params, @block)
     end
 
+    def param_count
+      return @params.size
+    end
+
     def accept(v)
       v.visit(self)
       @block.accept(v)

@@ -29,7 +29,7 @@ module Chalk
     end
 
     def to_bin(i, index)
-      0x6000 | (register << 8) | value
+      0x6000 | (@register << 8) | @value
     end
   end
 
@@ -48,7 +48,7 @@ module Chalk
     end
 
     def to_bin(i, index)
-      0x8000 | (into << 8) | (from << 4)
+      0x8000 | (@into << 8) | (@from << 4)
     end
   end
 
@@ -69,7 +69,7 @@ module Chalk
     def to_bin(i, index)
       case op
       when TokenType::OpAdd
-        return 0x7000 | (into << 8) | value
+        return 0x7000 | (@into << 8) | @value
       else
         raise "Invalid instruction"
       end
@@ -107,7 +107,7 @@ module Chalk
       else
         raise "Invalid instruction"
       end
-      return 0x8000 | (into << 8) | (from << 4) | code
+      return 0x8000 | (@into << 8) | (@from << 4) | code
     end
   end
 
@@ -123,7 +123,7 @@ module Chalk
     end
 
     def to_bin(i, index)
-      return 0xf055 | (up_to << 8)
+      return 0xf055 | (@up_to << 8)
     end
   end
 
@@ -139,7 +139,7 @@ module Chalk
     end
 
     def to_bin(i, index)
-      return 0xf065 | (up_to << 8)
+      return 0xf065 | (@up_to << 8)
     end
   end
 
@@ -167,7 +167,7 @@ module Chalk
     end
 
     def to_bin(i, index)
-      return 0x1000 | ((offset + index) * 2 + 0x200)
+      return 0x1000 | ((@offset + index) * 2 + 0x200)
     end
   end
 
@@ -185,7 +185,7 @@ module Chalk
     end
 
     def to_bin(i, index)
-      return 0x3000 | (left << 8) | right
+      return 0x3000 | (@left << 8) | @right
     end
   end
 
@@ -203,7 +203,7 @@ module Chalk
     end
 
     def to_bin(i, index)
-      return 0x4000 | (left << 8) | right
+      return 0x4000 | (@left << 8) | @right
     end
   end
 
@@ -222,7 +222,7 @@ module Chalk
     end
 
     def to_bin(i, index)
-      return 0x5000 | (left << 8) | (right << 4)
+      return 0x5000 | (@left << 8) | (@right << 4)
     end
   end
 
@@ -241,7 +241,7 @@ module Chalk
     end
 
     def to_bin(i, index)
-      return 0x9000 | (left << 8) | (right << 4)
+      return 0x9000 | (@left << 8) | (@right << 4)
     end
   end
 
@@ -282,7 +282,40 @@ module Chalk
     end
 
     def to_bin(i, index)
-      return 0xf000 | (reg << 8) | 0x1e
+      return 0xf000 | (@reg << 8) | 0x1e
+    end
+  end
+
+  class DrawInstruction < Instruction
+    property x : Int32
+    property y : Int32
+    property height : Int32
+
+    def initialize(@x, @y, @height)
+    end
+
+    def to_s(io)
+        io << "draw R"
+        x.to_s(16, io)
+        io << " R"
+        y.to_s(16, io)
+        io << " " << height
+    end
+
+    def to_bin(i, index)
+        return 0xd000 | (@x << 8) | (@y << 4) | height
+    end
+  end
+
+  class AwaitKeyInstruction < Instruction
+    property into : Int32
+
+    def initialize(@into)
+    end
+
+    def to_s(io)
+        io << "getk R"
+        @into.to_s(16, io)
     end
   end
 end

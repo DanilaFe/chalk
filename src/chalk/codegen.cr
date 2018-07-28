@@ -4,8 +4,11 @@ require "./emitter.cr"
 module Chalk
   class CodeGenerator
     include Emitter
+
     RETURN_REG = 14
     STACK_REG  = 13
+
+    property instructions : Array(Instruction)
 
     def initialize(table, @function : TreeFunction)
       @registers = 0
@@ -18,25 +21,12 @@ module Chalk
       end
     end
 
-    def generate!(tree, table, target, free)
-      case tree
-      when TreeId
-        entry = table[tree.id]?
-        raise "Unknown variable" unless entry &&
-                                        entry.is_a?(VarEntry)
-        loadr target, entry.register
-      when TreeLit
-        load target, tree.lit
-      when TreeOp
-        generate! tree.left, table, target, free
-        generate! tree.right, table, free, free + 1
-        opr tree.op, target, free
-      when TreeCall
-        entry = table[tree.name]?
-        raise "Unknown function" unless entry &&
-                                        entry.is_a?(FunctionEntry)
-        raise "Invalid call" if tree.params.size != entry.function.params.size
+    def generate!(tree, function : InlineFunction, table, target, free)
+        start = free
+        function.generate!(self, tree.params, table, target, free)
+    end
 
+    def generate!(tree, function : TreeFunction | BuiltinFunction, table, target, free)
         start_at = free
         # Move I to stack
         setis
@@ -71,6 +61,28 @@ module Chalk
         restore (start_at - 1) unless start_at == 0
         # Get call value into target
         loadr target, RETURN_REG
+    end
+
+    def generate!(tree, table, target, free)
+      case tree
+      when TreeId
+        entry = table[tree.id]?
+        raise "Unknown variable" unless entry &&
+                                        entry.is_a?(VarEntry)
+        loadr target, entry.register
+      when TreeLit
+        load target, tree.lit
+      when TreeOp
+        generate! tree.left, table, target, free
+        generate! tree.right, table, free, free + 1
+        opr tree.op, target, free
+      when TreeCall
+        entry = table[tree.name]?
+        raise "Unknown function" unless entry &&
+                                        entry.is_a?(FunctionEntry)
+        function = entry.function
+        raise "Invalid call" if tree.params.size != function.param_count
+        generate! tree, function, table, target, free
       when TreeBlock
         table = Table.new(table)
         tree.children.each do |child|
@@ -108,13 +120,6 @@ module Chalk
         ret
       end
       return 0
-    end
-
-    private def check_dead(inst)
-      if inst.is_a?(LoadRegInstruction)
-        return inst.from == inst.into
-      end
-      return false
     end
 
     def generate!

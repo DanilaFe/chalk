@@ -4,6 +4,13 @@ module Chalk
       @instructions = instructions.dup
     end
 
+    private def check_dead(inst)
+      if inst.is_a?(LoadRegInstruction)
+        return inst.from == inst.into
+      end
+      return false
+    end
+
     private def optimize!(range)
       offset = 0
       range.each do |index|
