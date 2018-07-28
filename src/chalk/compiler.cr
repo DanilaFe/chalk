@@ -6,40 +6,47 @@ module Chalk
   class Compiler
     def initialize(@config : Config)
       @logger = Logger.new STDOUT
-      @lexer = Lexer.new
-      @parser = Parser.new
       @logger.debug("Initialized compiler")
       @logger.level = Logger::DEBUG
     end
 
     private def create_trees(file)
       string = File.read(file)
-      tokens = @lexer.lex string
+      @logger.debug("Tokenizing")
+      lexer = Lexer.new
+      tokens = lexer.lex string
       if tokens.size == 0 && string != ""
         raise "Unable to tokenize file."
       end
       @logger.debug("Finished tokenizing")
-      if trees = @parser.parse?(tokens)
+      @logger.debug("Beginning parsing")
+      parser = Parser.new
+      if trees = parser.parse?(tokens)
         @logger.debug("Finished parsing")
+        @logger.debug("Beginning constant folding")
+        folder = ConstantFolder.new
+        trees.map! do |tree|
+            @logger.debug("Constant folding #{tree.name}")
+            tree.apply(folder).as(TreeFunction)
+        end
+        @logger.debug("Done constant folding")
         return trees
       end
       raise "Unable to parse file."
     end
 
-    private def process_initial(trees)
+    private def create_table(trees)
       table = Table.new
-      folder = ConstantFolder.new
+      @logger.debug("Creating symbol table")
       trees.each do |tree|
-        tree = tree.as(TreeFunction)
-        @logger.debug("Constant folding #{tree.name}")
-        tree = tree.apply(folder).as(TreeFunction)
         @logger.debug("Storing #{tree.name} in symbol table")
         table[tree.name] = FunctionEntry.new tree
       end
+      @logger.debug("Done creating symbol table")
       return table
     end
 
-    private def generate_code(trees, table)
+    private def create_code(trees, table)
       code = {} of String => Array(Instruction)
       trees.each do |tree|
         tree = tree.as(TreeFunction)
@@ -58,15 +65,10 @@ module Chalk
       end
     end
 
-    private def generate_ir
-      trees = create_trees(@config.file)
-      table = process_initial(trees)
-      raise "No main function!" unless table["main"]?
-      return { table, generate_code(trees, table) }
-    end
-
     private def run_intermediate
-      table, code = generate_ir
+      trees = create_trees(@config.file)
+      table = create_table(trees)
+      code = create_code(trees, table)
       code.each do |name, insts|
         puts "Code for #{name}:"
         insts.each { |it| puts it }
@@ -74,12 +76,22 @@ module Chalk
       end
     end
 
-    private def generate_binary(instructions)
+    private def generate_binary(table, instructions, dest)
+      context = InstructionContext.new table, instructions.size
+      binary = instructions.map_with_index { |it, i| it.to_bin(context, i).to_u16 }
+      binary.each do |inst|
+          first = (inst >> 8).to_u8
+          dest.write_byte(first)
+          second = (inst & 0xff).to_u8
+          dest.write_byte(second)
+      end
     end
 
     private def run_binary
       all_instructions = [] of Instruction
-      table, code = generate_ir
+      trees = create_trees(@config.file)
+      table = create_table(trees)
+      code = create_code(trees, table)
       all_instructions.concat code["main"]
       table["main"]?.as(FunctionEntry).addr = 0
       all_instructions << JumpRelativeInstruction.new 0
@@ -89,15 +101,8 @@ module Chalk
         all_instructions.concat(value)
         all_instructions << ReturnInstruction.new
       end
-      context = InstructionContext.new table, all_instructions.size
-      binary = all_instructions.map_with_index { |it, i| it.to_bin(context, i).to_u16 }
       file = File.open("out.ch8", "w")
-      binary.each do |inst|
-          first = (inst >> 8).to_u8
-          file.write_byte(first)
-          second = (inst & 0xff).to_u8
-          file.write_byte(second)
-      end
+      generate_binary(table, all_instructions, file)
       file.close
     end
 

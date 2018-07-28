@@ -156,14 +156,14 @@ module Chalk
           params = arr[3..arr.size - 5].map &.as(Token).string
           code = arr[arr.size - 1].as(Tree)
           type = arr[arr.size - 2].as(Token).type
-          TreeFunction.new(name, params, code).as(Tree)
+          TreeFunction.new(name, params, code)
         end
       return func
     end
 
     def initialize
       _, block = create_statement_block
-      @parser = many(create_func(block, create_type)).as(BasicParser(Array(Tree)))
+      @parser = many(create_func(block, create_type)).as(BasicParser(Array(TreeFunction)))
     end
 
     def parse?(tokens)
