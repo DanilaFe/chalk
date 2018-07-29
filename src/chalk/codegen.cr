@@ -86,16 +86,17 @@ module Chalk
       when TreeBlock
         table = Table.new(table)
         tree.children.each do |child|
-          free += generate! child, table, free, free
+          free += generate! child, table, free, free + 1
         end
       when TreeVar
         entry = table[tree.name]?
         if entry == nil
           entry = VarEntry.new free
+          free += 1
           table[tree.name] = entry
         end
         raise "Unknown variable" unless entry.is_a?(VarEntry)
-        generate! tree.expr, table, entry.register, free + 1
+        generate! tree.expr, table, entry.register, free
         return 1
       when TreeAssign
         entry = table[tree.name]?
@@ -118,7 +119,7 @@ module Chalk
       when TreeWhile
         before_cond = @instructions.size
         generate! tree.condition, table, free, free + 1
-        sne target, 0
+        sne free, 0
         cond_jump = jr 0
 
         old_size = @instructions.size
