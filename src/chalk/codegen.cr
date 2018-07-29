@@ -22,45 +22,45 @@ module Chalk
     end
 
     def generate!(tree, function : InlineFunction, table, target, free)
-        start = free
-        function.generate!(self, tree.params, table, target, free)
+      start = free
+      function.generate!(self, tree.params, table, target, free)
     end
 
     def generate!(tree, function : TreeFunction | BuiltinFunction, table, target, free)
-        start_at = free
-        # Move I to stack
-        setis
-        # Get to correct stack position
-        addi STACK_REG
-        # Store variables
-        store (start_at - 1) unless start_at == 0
-        # Increment I and stack position
-        load free, start_at
-        opr TokenType::OpAdd, STACK_REG, free
-        addi free
+      start_at = free
+      # Move I to stack
+      setis
+      # Get to correct stack position
+      addi STACK_REG
+      # Store variables
+      store (start_at - 1) unless start_at == 0
+      # Increment I and stack position
+      load free, start_at
+      opr TokenType::OpAdd, STACK_REG, free
+      addi free
 
-        # Calculate the parameters
-        tree.params.each do |param|
-          generate! param, table, free, free + 1
-          free += 1
-        end
-        # Call the function
-        tree.params.size.times do |time|
-          loadr time, time + start_at
-        end
-        call tree.name
+      # Calculate the parameters
+      tree.params.each do |param|
+        generate! param, table, free, free + 1
+        free += 1
+      end
+      # Call the function
+      tree.params.size.times do |time|
+        loadr time, time + start_at
+      end
+      call tree.name
 
-        # Reduce stack pointer
-        load free, start_at
-        opr TokenType::OpSub, STACK_REG, free
-        # Move I to stack
-        setis
-        # Get to correct stack position
-        addi STACK_REG
-        # Restore
-        restore (start_at - 1) unless start_at == 0
-        # Get call value into target
-        loadr target, RETURN_REG
+      # Reduce stack pointer
+      load free, start_at
+      opr TokenType::OpSub, STACK_REG, free
+      # Move I to stack
+      setis
+      # Get to correct stack position
+      addi STACK_REG
+      # Restore
+      restore (start_at - 1) unless start_at == 0
+      # Get call value into target
+      loadr target, RETURN_REG
     end
 
     def generate!(tree, table, target, free)
@@ -124,7 +124,7 @@ module Chalk
         old_size = @instructions.size
         generate! tree.block, table, free, free + 1
         after_jump = jr 0
-        
+
         cond_jump.offset = @instructions.size - old_size + 1
         after_jump.offset = before_cond - instructions.size + 1
       when TreeReturn

@@ -295,15 +295,15 @@ module Chalk
     end
 
     def to_s(io)
-        io << "draw R"
-        x.to_s(16, io)
-        io << " R"
-        y.to_s(16, io)
-        io << " " << height
+      io << "draw R"
+      x.to_s(16, io)
+      io << " R"
+      y.to_s(16, io)
+      io << " " << height
     end
 
     def to_bin(i, index)
-        return 0xd000 | (@x << 8) | (@y << 4) | height
+      return 0xd000 | (@x << 8) | (@y << 4) | height
     end
   end
 
@@ -314,28 +314,28 @@ module Chalk
     end
 
     def to_s(io)
-        io << "getk R"
-        @into.to_s(16, io)
+      io << "getk R"
+      @into.to_s(16, io)
     end
 
     def to_bin(i, index)
-        return 0xf00a | (@into << 8)
+      return 0xf00a | (@into << 8)
     end
   end
 
   class GetFontInstruction < Instruction
     property from : Int32
-    
+
     def initialize(@from)
     end
 
     def to_s(io)
-        io << "font R"
-        @from.to_s(16, io)
+      io << "font R"
+      @from.to_s(16, io)
     end
 
     def to_bin(i, index)
-        return 0xf029 | (@from << 8)
+      return 0xf029 | (@from << 8)
     end
   end
 
@@ -346,12 +346,12 @@ module Chalk
     end
 
     def to_s(io)
-        io << "set_delay R"
-        @from.to_s(16, io)
+      io << "set_delay R"
+      @from.to_s(16, io)
     end
 
     def to_bin(i, index)
-        return 0xf015 | (@from << 8)
+      return 0xf015 | (@from << 8)
     end
   end
 
@@ -362,12 +362,12 @@ module Chalk
     end
 
     def to_s(io)
-        io << "get_delay R"
-        @into.to_s(16, io)
+      io << "get_delay R"
+      @into.to_s(16, io)
     end
 
     def to_bin(i, index)
-        return 0xf007 | (@into << 8)
+      return 0xf007 | (@into << 8)
     end
   end
 end
