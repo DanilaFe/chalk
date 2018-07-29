@@ -103,8 +103,8 @@ module Chalk
                                         entry.is_a?(VarEntry)
         generate! tree.expr, table, entry.register, free
       when TreeIf
-        generate! tree.condition, table, target, free
-        sne target, 0
+        generate! tree.condition, table, free, free + 1
+        sne free, 0
         jump_inst = jr 0
 
         old_size = @instructions.size
@@ -115,6 +115,18 @@ module Chalk
         old_size = @instructions.size
         generate! tree.otherwise, table, free, free + 1 if tree.otherwise
         jump_after.offset = @instructions.size - old_size + 1
+      when TreeWhile
+        before_cond = @instructions.size
+        generate! tree.condition, table, free, free + 1
+        sne target, 0
+        cond_jump = jr 0
+
+        old_size = @instructions.size
+        generate! tree.block, table, free, free + 1
+        after_jump = jr 0
+        
+        cond_jump.offset = @instructions.size - old_size + 1
+        after_jump.offset = before_cond - instructions.size + 1
       when TreeReturn
         generate! tree.rvalue, table, RETURN_REG, free
         ret
