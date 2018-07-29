@@ -46,6 +46,9 @@ module Chalk
 
       table["draw"] = FunctionEntry.new InlineDrawFunction.new
       table["get_key"] = FunctionEntry.new InlineAwaitKeyFunction.new
+      table["get_font"] = FunctionEntry.new InlineGetFontFunction.new
+      table["set_delay"] = FunctionEntry.new InlineSetDelayFunction.new
+      table["get_delay"] = FunctionEntry.new InlineGetDelayFunction.new
       return table
     end
 

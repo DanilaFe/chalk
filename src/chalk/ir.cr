@@ -317,5 +317,57 @@ module Chalk
         io << "getk R"
         @into.to_s(16, io)
     end
+
+    def to_bin(i, index)
+        return 0xf00a | (@into << 8)
+    end
+  end
+
+  class GetFontInstruction < Instruction
+    property from : Int32
+    
+    def initialize(@from)
+    end
+
+    def to_s(io)
+        io << "font R"
+        @from.to_s(16, io)
+    end
+
+    def to_bin(i, index)
+        return 0xf029 | (@from << 8)
+    end
+  end
+
+  class SetDelayTimerInstruction < Instruction
+    property from : Int32
+
+    def initialize(@from)
+    end
+
+    def to_s(io)
+        io << "set_delay R"
+        @from.to_s(16, io)
+    end
+
+    def to_bin(i, index)
+        return 0xf015 | (@from << 8)
+    end
+  end
+
+  class GetDelayTimerInstruction < Instruction
+    property into : Int32
+
+    def initialize(@into)
+    end
+
+    def to_s(io)
+        io << "get_delay R"
+        @into.to_s(16, io)
+    end
+
+    def to_bin(i, index)
+        return 0xf007 | (@into << 8)
+    end
   end
 end
