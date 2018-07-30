@@ -22,7 +22,6 @@ module Chalk
     end
 
     def generate!(tree, function : InlineFunction, table, target, free)
-      start = free
       function.generate!(self, tree.params, table, target, free)
     end
 
