@@ -5,7 +5,7 @@ module Chalk
     def initialize(@param_count)
     end
 
-    def generate!(into)
+    def generate!(codegen)
     end
   end
 

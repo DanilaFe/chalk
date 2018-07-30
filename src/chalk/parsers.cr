@@ -1,5 +1,3 @@
-require "./builder.cr"
-
 module Chalk
   abstract class BasicParser(T)
     abstract def parse?(tokens : Array(Token),

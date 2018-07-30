@@ -2,7 +2,7 @@ require "./lexer.cr"
 require "./parsers.cr"
 
 module Chalk
-  module Builder
+  module ParserBuilder
     def type(type) : BasicParser(Token)
       return TypeParser.new(type).as(BasicParser(Token))
     end

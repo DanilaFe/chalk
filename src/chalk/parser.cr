@@ -1,8 +1,8 @@
-require "./builder.cr"
+require "./parser_builder.cr"
 
 module Chalk
   class Parser
-    include Builder
+    include ParserBuilder
 
     private def create_type
       either(type(TokenType::KwU0), type(TokenType::KwU8), type(TokenType::KwU12))
