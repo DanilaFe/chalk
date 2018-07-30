@@ -54,9 +54,8 @@ module Chalk
 
     private def create_code(tree : TreeFunction, table)
       generator = CodeGenerator.new table, tree
-      optimizer = Optimizer.new
       @logger.debug("Generating code for #{tree.name}")
-      return optimizer.optimize generator.generate!
+      return generator.generate!
     end
 
     private def create_code(tree : BuiltinFunction, table)
