@@ -52,13 +52,16 @@ module Chalk
       return table
     end
 
-    private def create_code(tree : TreeFunction, table)
+    private def create_code(tree : TreeFunction, table, instruction = ReturnInstruction.new)
+      optimizer = Optimizer.new
       generator = CodeGenerator.new table, tree
       @logger.debug("Generating code for #{tree.name}")
-      return generator.generate!
+      code = generator.generate!
+      code << instruction
+      return optimizer.optimize(code)
     end
 
-    private def create_code(tree : BuiltinFunction, table)
+    private def create_code(tree : BuiltinFunction, table, instruction = nil)
       instructions = [] of Instruction
       tree.generate!(instructions)
       return instructions
@@ -132,9 +135,9 @@ module Chalk
       names.delete "main"
 
       main_entry = table["main"]?.as(FunctionEntry)
-      all_instructions.concat create_code(main_entry.function.as(TreeFunction), table)
+      all_instructions.concat create_code(main_entry.function.as(TreeFunction),
+        table, JumpRelativeInstruction.new 0)
       main_entry.addr = 0
-      all_instructions << JumpRelativeInstruction.new 0
 
       names.each do |name|
         entry = table[name]?.as(FunctionEntry)
