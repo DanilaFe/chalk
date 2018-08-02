@@ -2,12 +2,13 @@ require "./tree.cr"
 
 module Chalk
   module Trees
+    # Visitor that prints a `Tree`.
     class PrintVisitor < Visitor
       def initialize(@stream : IO)
         @indent = 0
       end
 
-      def print_indent
+      private def print_indent
         @indent.times do
           @stream << "  "
         end

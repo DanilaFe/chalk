@@ -1,6 +1,9 @@
 module Chalk
   module Compiler
+    # Class to optimize instructions.
     class Optimizer
+      # Checks if *inst* is "dead code",
+      # an instruction that is completely useless.
       private def check_dead(inst)
         if inst.is_a?(Ir::LoadRegInstruction)
           return inst.from == inst.into
@@ -8,6 +11,9 @@ module Chalk
         return false
       end
 
+      # Optimizes *instructions* in the basic block given by the *range*,
+      # storing addresses of instructions to be deleted into *deletions*,
+      # and the number of deleted instructions so far into *deletions_at*
       private def optimize!(instructions, range, deletions, deletions_at)
         range.each do |index|
           if check_dead(instructions[index])
@@ -17,13 +23,20 @@ module Chalk
         end
       end
 
+      # Optimizes the given list of instructions.
+      # The basic blocks are inferred from the various
+      # jumps and skips.
       def optimize(instructions)
         instructions = instructions.dup
         block_boundaries = [instructions.size]
         instructions.each_with_index do |inst, i|
           if inst.is_a?(Ir::JumpRelativeInstruction)
-            block_boundaries << i
+            block_boundaries << (i + 1)
             block_boundaries << (inst.offset + i)
+          end
+          if inst.is_a?(Ir::SkipNeInstruction | Ir::SkipEqInstruction |
+                        Ir::SkipRegEqInstruction | Ir::SkipRegNeInstruction)
+            block_boundaries << (i + 1)
           end
         end
         block_boundaries.uniq!.sort!

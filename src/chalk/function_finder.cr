@@ -1,5 +1,6 @@
 module Chalk
   module Trees
+    # Visitor that finds all function calls in a function.
     class CallVisitor < Visitor
       property calls : Set(String)
 

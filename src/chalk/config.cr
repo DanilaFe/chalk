@@ -1,19 +1,34 @@
 module Chalk
   module Ui
+    # The mode in which the compiler operates.
+    # Defines what actions are and aren't performed.
     enum OutputMode
+      # The text is only parsed, and the result is printed to the screen.
       Tree,
+      # The text is parsed and converted to intermediate representation.
+      # The intermediate representation is then printed to the screen.
       Intermediate,
+      # The text is converted into a full CHIP-8 executable.
       Binary
     end
 
+    # A configuration class created from the command-line parameters.
     class Config
-      property file : String
-      property mode : OutputMode
+      # Gets the file to be compiled.
+      getter file : String
+      # Sets the file to be compiled.
+      setter file : String
+      # Gets the mode in which the compiler should operate.
+      getter mode : OutputMode
+      # Sets the mode in which the compiler should operate.
+      setter mode : OutputMode
 
+      # Creates a new configuration.
       def initialize(@file = "",
                      @mode = OutputMode::Tree)
       end
 
+      # Reads a configuration from the command line options.
       def self.parse!
         config = self.new
         OptionParser.parse! do |parser|
@@ -38,6 +53,8 @@ module Chalk
         return config
       end
 
+      # Validates the options provided, returning true if
+      # they are valid and false otherwise.
       def validate!
         if file == ""
           puts "No source file specified."

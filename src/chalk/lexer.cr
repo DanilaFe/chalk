@@ -2,6 +2,7 @@ require "lex"
 
 module Chalk
   module Compiler
+    # The type of a token that can be lexed.
     enum TokenType
       Any,
       Str,
@@ -29,14 +30,21 @@ module Chalk
       KwReturn
     end
 
+    # A class that stores the string it matched and its token type.
     class Token
       def initialize(@string : String, @type : TokenType)
       end
 
+      # Gets the string this token represents.
       getter string : String
+      # Gets the type of this token.
       getter type : TokenType
     end
 
+    # Creates a new Lexer with default token values.
+    # The lexer is backed by liblex. When a string is
+    # matched by several tokens, the longest match is chosen
+    # first, followed by the match with the highest enum value.
     class Lexer
       def initialize
         @lexer = Lex::Lexer.new
@@ -71,6 +79,7 @@ module Chalk
         @lexer.add_pattern("return", TokenType::KwReturn.value)
       end
 
+      # Converts a string into tokens.
       def lex(string)
         return @lexer.lex(string)
           .select { |t| !t[0][0].whitespace? }

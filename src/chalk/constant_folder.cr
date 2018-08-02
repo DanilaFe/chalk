@@ -2,6 +2,8 @@ require "./tree.cr"
 
 module Chalk
   module Trees
+    # `Trees::Transformer` that turns operations on
+    # Constants into constants.
     class ConstantFolder < Transformer
       private def perform_op(op, left, right)
         case op

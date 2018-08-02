@@ -1,5 +1,6 @@
 module Chalk
   module Trees
+    # A class used to visit nodes of a tree.
     class Visitor
       def visit(tree)
       end
@@ -8,12 +9,16 @@ module Chalk
       end
     end
 
+    # A class used to transform a tree, bottom up.
+    # "Modern Compiler Design" refers to this technique
+    # as BURS.
     class Transformer
       def transform(tree)
         return tree
       end
     end
 
+    # The base class of a tree.
     class Tree
       def accept(v)
         v.visit(self)
@@ -25,6 +30,7 @@ module Chalk
       end
     end
 
+    # A tree that represents an ID.
     class TreeId < Tree
       property id : String
 
@@ -32,6 +38,7 @@ module Chalk
       end
     end
 
+    # A tree that represents an integer literal.
     class TreeLit < Tree
       property lit : Int64
 
@@ -39,6 +46,7 @@ module Chalk
       end
     end
 
+    # A tree that represents a function call.
     class TreeCall < Tree
       property name : String
       property params : Array(Tree)
@@ -60,6 +68,7 @@ module Chalk
       end
     end
 
+    # A tree that represents an operation on two values.
     class TreeOp < Tree
       property op : Compiler::TokenType
       property left : Tree
@@ -82,6 +91,7 @@ module Chalk
       end
     end
 
+    # A tree that represents a block of statements.
     class TreeBlock < Tree
       property children : Array(Tree)
 
@@ -102,6 +112,7 @@ module Chalk
       end
     end
 
+    # A tree that represents a function declaration.
     class TreeFunction < Tree
       property name : String
       property params : Array(String)
@@ -126,6 +137,8 @@ module Chalk
       end
     end
 
+    # A tree that represents the declaration of
+    # a new variable.
     class TreeVar < Tree
       property name : String
       property expr : Tree
@@ -145,6 +158,8 @@ module Chalk
       end
     end
 
+    # A tree that represents the assignment
+    # to an existing variable.
     class TreeAssign < Tree
       property name : String
       property expr : Tree
@@ -164,6 +179,7 @@ module Chalk
       end
     end
 
+    # A tree that represents an if statement.
     class TreeIf < Tree
       property condition : Tree
       property block : Tree
@@ -188,6 +204,7 @@ module Chalk
       end
     end
 
+    # A tree that represents a while loop.
     class TreeWhile < Tree
       property condition : Tree
       property block : Tree
@@ -209,6 +226,7 @@ module Chalk
       end
     end
 
+    # A tree that represents a return statement.
     class TreeReturn < Tree
       property rvalue : Tree
 

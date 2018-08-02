@@ -3,14 +3,21 @@ require "./emitter.cr"
 
 module Chalk
   module Compiler
+    # A class that converts a tree into the corresponding
+    # intermediate representation, without optimizing.
     class CodeGenerator
       include Emitter
 
+      # The register into which the return value of a function is stored.
       RETURN_REG = 14
+      # The register into which the "stack pointer" is stored.
       STACK_REG  = 13
 
-      property instructions : Array(Ir::Instruction)
+      # Gets the instructions currently emitted by this code generator.
+      getter instructions
 
+      # Creates a new compiler with the given symbol *table*
+      # and *function* for which code should be generated.
       def initialize(table, @function : Trees::TreeFunction)
         @registers = 0
         @instructions = [] of Ir::Instruction
@@ -22,10 +29,17 @@ module Chalk
         end
       end
 
+      # Generates code for an inline function, with the given *tree* being the `Trees::TreeCall`
+      # that caused the function call. The other parameters are as described in the more general
+      # `#generate!` call.
       def generate!(tree, function : Builtin::InlineFunction, table, target, free)
         function.generate!(self, tree.params, table, target, free)
       end
 
+      # Generates code for a tree or a builtin function (that is, a call is actually necessary).
+      # I is set to the current stack pointer, the registers are stored, and the call is made.
+      # The registers are then restored. The other parameters are as described in the more general
+      # `#generate!` call.
       def generate!(tree, function : Trees::TreeFunction | Builtin::BuiltinFunction, table, target, free)
         start_at = free
         # Move I to stack
@@ -63,6 +77,11 @@ module Chalk
         loadr target, RETURN_REG
       end
 
+      # Generates code for a *tree*, using a symbol *table*
+      # housing all the names for identifiers in the code.
+      # The result is stored into the *target* register,
+      # and the *free* register is the next register into
+      # which a value can be stored for "scratch work".
       def generate!(tree, table, target, free)
         case tree
         when Trees::TreeId
@@ -135,6 +154,7 @@ module Chalk
         return 0
       end
 
+      # Generates code for the function that was given to it.
       def generate!
         generate!(@function.block, @table, -1, @registers)
         return @instructions

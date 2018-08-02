@@ -2,25 +2,19 @@ require "./lexer.cr"
 
 module Chalk
   module Ir
+    # Base instruction class.
     class Instruction
-      def to_bin(i, index)
+      # Converts the instruction to binary, using
+      # A table for symbol lookups, the stack position,
+      # and the inex of the instruction.
+      def to_bin(table, stack, index)
         return 0
       end
     end
 
-    class InstructionContext
-      property table : Compiler::Table
-      property stack : Int32
-
-      def initialize(@table, @stack)
-      end
-    end
-
+    # Instruction to load a value into a register.
     class LoadInstruction < Instruction
-      property register : Int32
-      property value : Int32
-
-      def initialize(@register, @value)
+      def initialize(@register : Int32, @value : Int32)
       end
 
       def to_s(io)
@@ -29,16 +23,19 @@ module Chalk
         io << " " << @value
       end
 
-      def to_bin(i, index)
+      def to_bin(table, stack, index)
         0x6000 | (@register << 8) | @value
       end
     end
 
+    # Instruction to load a register into another register.
     class LoadRegInstruction < Instruction
-      property into : Int32
-      property from : Int32
+      # Gets the register being written to.
+      getter into
+      # Gets the register being used as right-hand operand.
+      getter from
 
-      def initialize(@into, @from)
+      def initialize(@into : Int32, @from : Int32)
       end
 
       def to_s(io)
@@ -48,27 +45,25 @@ module Chalk
         @from.to_s(16, io)
       end
 
-      def to_bin(i, index)
+      def to_bin(table, stack, index)
         0x8000 | (@into << 8) | (@from << 4)
       end
     end
 
+    # Instruction to perform an operation on a register and a value,
+    # storing the output back into the register.
     class OpInstruction < Instruction
-      property op : Compiler::TokenType
-      property into : Int32
-      property value : Int32
-
-      def initialize(@op, @into, @value)
+      def initialize(@op : Compiler::TokenType, @into : Int32, @value : Int32)
       end
 
       def to_s(io)
-        io << "op " << op << " R"
+        io << "op " << @op << " R"
         @into.to_s(16, io)
         io << " " << @value
       end
 
-      def to_bin(i, index)
-        case op
+      def to_bin(table, stack, index)
+        case @op
         when Compiler::TokenType::OpAdd
           return 0x7000 | (@into << 8) | @value
         else
@@ -77,24 +72,22 @@ module Chalk
       end
     end
 
+    # Instruction to perform an operation on a register and another register,
+    # storing the output back into left hand register.
     class OpRegInstruction < Instruction
-      property op : Compiler::TokenType
-      property into : Int32
-      property from : Int32
-
-      def initialize(@op, @into, @from)
+      def initialize(@op : Compiler::TokenType, @into : Int32, @from : Int32)
       end
 
       def to_s(io)
-        io << "opr " << op << " R"
+        io << "opr " << @op << " R"
         @into.to_s(16, io)
         io << " R"
         @from.to_s(16, io)
       end
 
-      def to_bin(i, index)
+      def to_bin(table, stack, index)
         code = 0
-        case op
+        case @op
         when Compiler::TokenType::OpAdd
           code = 4
         when Compiler::TokenType::OpSub
@@ -112,10 +105,11 @@ module Chalk
       end
     end
 
+    # Instruction to write registers to memory at address I.
+    # The *up_to* parameter specifies the highest register
+    # that should be stored.
     class StoreInstruction < Instruction
-      property up_to : Int32
-
-      def initialize(@up_to)
+      def initialize(@up_to : Int32)
       end
 
       def to_s(io)
@@ -123,15 +117,16 @@ module Chalk
         @up_to.to_s(16, io)
       end
 
-      def to_bin(i, index)
+      def to_bin(table, stack, index)
         return 0xf055 | (@up_to << 8)
       end
     end
 
+    # Instruction to read registers from memory at address I.
+    # The *up_to* parameter specifies the highest register
+    # that should be read into.
     class RestoreInstruction < Instruction
-      property up_to : Int32
-
-      def initialize(@up_to)
+      def initialize(@up_to : Int32)
       end
 
       def to_s(io)
@@ -139,11 +134,12 @@ module Chalk
         @up_to.to_s(16, io)
       end
 
-      def to_bin(i, index)
+      def to_bin(table, stack, index)
         return 0xf065 | (@up_to << 8)
       end
     end
 
+    # Instruction to return from a call.
     class ReturnInstruction < Instruction
       def initialize
       end
@@ -152,67 +148,68 @@ module Chalk
         io << "return"
       end
 
-      def to_bin(i, index)
+      def to_bin(table, stack, index)
         return 0x00ee
       end
     end
 
+    # Instruction to jump relative to its own position.
     class JumpRelativeInstruction < Instruction
-      property offset : Int32
+      # Gets the offset of this instruction.
+      getter offset
+      # Sets the offset of this instruction
+      setter offset
 
-      def initialize(@offset)
+      def initialize(@offset : Int32)
       end
 
       def to_s(io)
         io << "jr " << @offset
       end
 
-      def to_bin(i, index)
+      def to_bin(table, stack, index)
         return 0x1000 | ((@offset + index) * 2 + 0x200)
       end
     end
 
+    # Instruction to skip the next instruction if
+    # the left-hand register is equal to the right-hand value.
     class SkipEqInstruction < Instruction
-      property left : Int32
-      property right : Int32
-
-      def initialize(@left, @right)
+      def initialize(@left : Int32, @right : Int32)
       end
 
       def to_s(io)
         io << "seq R"
         @left.to_s(16, io)
-        io << " " << right
+        io << " " << @right
       end
 
-      def to_bin(i, index)
+      def to_bin(table, stack, index)
         return 0x3000 | (@left << 8) | @right
       end
     end
 
+    # Instruction to skip the next instruction if
+    # the left-hand register is not equal to the right-hand value.
     class SkipNeInstruction < Instruction
-      property left : Int32
-      property right : Int32
-
-      def initialize(@left, @right)
+      def initialize(@left : Int32, @right : Int32)
       end
 
       def to_s(io)
         io << "sne R"
         @left.to_s(16, io)
-        io << " " << right
+        io << " " << @right
       end
 
-      def to_bin(i, index)
+      def to_bin(table, stack, index)
         return 0x4000 | (@left << 8) | @right
       end
     end
 
+    # Instruction to skip the next instruction if
+    # the left-hand register is equal to the right-hand register.
     class SkipRegEqInstruction < Instruction
-      property left : Int32
-      property right : Int32
-
-      def initialize(@left, @right)
+      def initialize(@left : Int32, @right : Int32)
       end
 
       def to_s(io)
@@ -222,16 +219,15 @@ module Chalk
         @right.to_s(16, io)
       end
 
-      def to_bin(i, index)
+      def to_bin(table, stack, index)
         return 0x5000 | (@left << 8) | (@right << 4)
       end
     end
 
+    # Instruction to skip the next instruction if
+    # the left-hand register is not equal to the right-hand register.
     class SkipRegNeInstruction < Instruction
-      property left : Int32
-      property right : Int32
-
-      def initialize(@left, @right)
+      def initialize(@left : Int32, @right : Int32)
       end
 
       def to_s(io)
@@ -241,77 +237,77 @@ module Chalk
         @right.to_s(16, io)
       end
 
-      def to_bin(i, index)
+      def to_bin(table, stack, index)
         return 0x9000 | (@left << 8) | (@right << 4)
       end
     end
 
+    # Instruction to call a function by name.
     class CallInstruction < Instruction
-      property name : String
+      # Gets the name of the function being called.
+      getter name
 
-      def initialize(@name)
+      def initialize(@name : String)
       end
 
       def to_s(io)
         io << "call " << @name
       end
 
-      def to_bin(i, index)
-        return 0x2000 | (i.table[name]?.as(Compiler::FunctionEntry).addr * 2 + 0x200)
+      def to_bin(table, stack, index)
+        return 0x2000 | (table[name]?.as(Compiler::FunctionEntry).addr * 2 + 0x200)
       end
     end
 
+    # Instruction to set I to the base position of the stack.
     class SetIStackInstruction < Instruction
       def to_s(io)
         io << "setis"
       end
 
-      def to_bin(i, index)
-        return 0xa000 | (i.stack * 2 + 0x200)
+      def to_bin(table, stack, index)
+        return 0xa000 | (stack * 2 + 0x200)
       end
     end
 
+    # Instruction to add a register to I.
     class AddIRegInstruction < Instruction
-      property reg : Int32
-
-      def initialize(@reg)
+      def initialize(@reg : Int32)
       end
 
       def to_s(io)
         io << "addi R"
-        reg.to_s(16, io)
+        @reg.to_s(16, io)
       end
 
-      def to_bin(i, index)
+      def to_bin(table, stack, index)
         return 0xf000 | (@reg << 8) | 0x1e
       end
     end
 
+    # Instruction to draw on screen.
+    # The x and y coordinates specify the position of the sprite,
+    # and the height gives the height of the sprite.
     class DrawInstruction < Instruction
-      property x : Int32
-      property y : Int32
-      property height : Int32
-
-      def initialize(@x, @y, @height)
+      def initialize(@x : Int32, @y : Int32, @height : Int32)
       end
 
       def to_s(io)
         io << "draw R"
-        x.to_s(16, io)
+        @x.to_s(16, io)
         io << " R"
-        y.to_s(16, io)
-        io << " " << height
+        @y.to_s(16, io)
+        io << " " << @height
       end
 
-      def to_bin(i, index)
-        return 0xd000 | (@x << 8) | (@y << 4) | height
+      def to_bin(table, stack, index)
+        return 0xd000 | (@x << 8) | (@y << 4) | @height
       end
     end
 
+    # Instruction to await a key press and store it into a register.
     class AwaitKeyInstruction < Instruction
-      property into : Int32
-
-      def initialize(@into)
+      def initialize(@into : Int32)
       end
 
       def to_s(io)
@@ -319,15 +315,15 @@ module Chalk
         @into.to_s(16, io)
       end
 
-      def to_bin(i, index)
+      def to_bin(table, stack, index)
         return 0xf00a | (@into << 8)
       end
     end
 
+    # Instruction to set I to the font given by the value
+    # of a register.
     class GetFontInstruction < Instruction
-      property from : Int32
-
-      def initialize(@from)
+      def initialize(@from : Int32)
       end
 
       def to_s(io)
@@ -335,15 +331,15 @@ module Chalk
         @from.to_s(16, io)
       end
 
-      def to_bin(i, index)
+      def to_bin(table, stack, index)
         return 0xf029 | (@from << 8)
       end
     end
 
+    # Instruction to set the delay timer to the value
+    # of the given register.
     class SetDelayTimerInstruction < Instruction
-      property from : Int32
-
-      def initialize(@from)
+      def initialize(@from : Int32)
       end
 
       def to_s(io)
@@ -351,15 +347,15 @@ module Chalk
         @from.to_s(16, io)
       end
 
-      def to_bin(i, index)
+      def to_bin(table, stack, index)
         return 0xf015 | (@from << 8)
       end
     end
 
+    # Instruction to get the delay timer, and store
+    # the value into the given register.
     class GetDelayTimerInstruction < Instruction
-      property into : Int32
-
-      def initialize(@into)
+      def initialize(@into : Int32)
       end
 
       def to_s(io)
@@ -367,7 +363,7 @@ module Chalk
         @into.to_s(16, io)
       end
 
-      def to_bin(i, index)
+      def to_bin(table, stack, index)
         return 0xf007 | (@into << 8)
       end
     end

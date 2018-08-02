@@ -2,13 +2,16 @@ require "./parser_builder.cr"
 
 module Chalk
   module ParserCombinators
+    # Parser created out of the various parser combinators.
     class Parser
       include ParserBuilder
 
+      # Creates a parser for a type.
       private def create_type
         either(type(Compiler::TokenType::KwU0), type(Compiler::TokenType::KwU8), type(Compiler::TokenType::KwU12))
       end
 
+      # Creates a parser for an integer literal.
       private def create_lit
         dec_parser = type(Compiler::TokenType::LitDec).transform &.string.to_i64
         hex_parser = type(Compiler::TokenType::LitHex).transform &.string.lchop("0x").to_i64(16)
@@ -17,6 +20,8 @@ module Chalk
         return lit_parser
       end
 
+      # Creates a parser for an operation with a given *atom* parser
+      # and *op* parser.
       private def create_op_expr(atom, op)
         pl = PlaceholderParser(Trees::Tree).new
         recurse = atom.then(op).then(pl).transform do |arr|
@@ -30,12 +35,16 @@ module Chalk
         return pl
       end
 
+      # Creates a parser to parse layers of *ops* with multiple
+      # levels of precedence, specified by their order. The *atom*
+      # is the most basic expression.
       private def create_op_exprs(atom, ops)
         ops.reduce(atom) do |previous, current|
           create_op_expr(previous, current)
         end
       end
 
+      # Creates a parser for a call, with the given expression parser.
       private def create_call(expr)
         call = type(Compiler::TokenType::Id).then(char '(').then(delimited(expr, char ',')).then(char ')').transform do |arr|
           arr = arr.flatten
@@ -46,6 +55,7 @@ module Chalk
         return call
       end
 
+      # Creates a parser for an expression.
       private def create_expr
         expr_place = PlaceholderParser(Trees::Tree).new
         literal = create_lit
@@ -64,6 +74,7 @@ module Chalk
         return expr
       end
 
+      # Creates a parser for a var statement.
       private def create_var(expr)
         var = type(Compiler::TokenType::KwVar).then(type(Compiler::TokenType::Id)).then(char '=').then(expr).then(char ';').transform do |arr|
           arr = arr.flatten
@@ -74,6 +85,7 @@ module Chalk
         return var
       end
 
+      # Creates a parser for an assignment statement.
       private def create_assign(expr)
         assign = type(Compiler::TokenType::Id).then(char '=').then(expr).then(char ';').transform do |arr|
           arr = arr.flatten
@@ -84,6 +96,7 @@ module Chalk
         return assign
       end
 
+      # Creates a parser for a basic statement.
       private def create_basic(expr)
         basic = expr.then(char ';').transform do |arr|
           arr.flatten[0].as(Trees::Tree)
@@ -91,6 +104,7 @@ module Chalk
         return basic
       end
 
+      # Creates a parser for an if statement.
       private def create_if(expr, block)
         iff = type(Compiler::TokenType::KwIf).then(char '(').then(expr).then(char ')').then(block)
           .then(optional(type(Compiler::TokenType::KwElse).then(block)))
@@ -104,6 +118,7 @@ module Chalk
         return iff
       end
 
+      # Creates a parser for a while loop.
       private def create_while(expr, block)
         whilee = type(Compiler::TokenType::KwWhile).then(char '(').then(expr).then(char ')').then(block).transform do |arr|
           arr = arr.flatten
@@ -114,6 +129,7 @@ module Chalk
         return whilee
       end
 
+      # Creates a parser for a return.
       private def create_return(expr)
         returnn = type(Compiler::TokenType::KwReturn).then(expr).then(char ';').transform do |arr|
           arr = arr.flatten
@@ -123,6 +139,7 @@ module Chalk
         return returnn
       end
 
+      # Creates a parser for a block of statements.
       private def create_block(statement)
         block = char('{').then(many(statement)).then(char '}').transform do |arr|
           arr = arr.flatten
@@ -132,6 +149,7 @@ module Chalk
         return block
       end
 
+      # Creates a statement and block parser, returning both.
       private def create_statement_block
         statement_place = PlaceholderParser(Trees::Tree).new
         expr = create_expr
@@ -147,6 +165,7 @@ module Chalk
         return {statement, block}
       end
 
+      # Creates a parser for a function declaration.
       private def create_func(block, type)
         func = type(Compiler::TokenType::KwFun).then(type(Compiler::TokenType::Id))
           .then(char '(').then(delimited(type(Compiler::TokenType::Id), char ',')).then(char ')')
@@ -167,6 +186,7 @@ module Chalk
         @parser = many(create_func(block, create_type)).as(BasicParser(Array(Trees::TreeFunction)))
       end
 
+      # Parses the given tokens into a tree.
       def parse?(tokens)
         return @parser.parse?(tokens, 0).try &.[0]
       end

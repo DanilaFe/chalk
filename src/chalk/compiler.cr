@@ -4,13 +4,19 @@ require "./table.cr"
 
 module Chalk
   module Compiler
+    # Top-level class to tie together the various
+    # components, such as the `Lexer`,
+    # `ParserCombinators::Parser`, and `Optimizer`
     class Compiler
+      # Creates a new compiler with the given *config*.
       def initialize(@config : Ui::Config)
         @logger = Logger.new STDOUT
         @logger.debug("Initialized compiler")
         @logger.level = Logger::DEBUG
       end
 
+      # Reads a file an extracts instances of
+      # `Trees:TreeFunction`.
       private def create_trees(file)
         string = File.read(file)
         @logger.debug("Tokenizing")
@@ -36,6 +42,8 @@ module Chalk
         raise "Unable to parse file."
       end
 
+      # Creates a default symbol table using the default functions,
+      # as well as the functions declared by *trees*
       private def create_table(trees)
         table = Table.new
         @logger.debug("Creating symbol table")
@@ -53,6 +61,9 @@ module Chalk
         return table
       end
 
+      # Generates and optimizes intermediate representation for the given *tree*,
+      # looking up identifiers in the symbol *table*, and appending the given *instruction*
+      # at the end of the function to ensure correct program flow.
       private def create_code(tree : Trees::TreeFunction, table, instruction = Ir::ReturnInstruction.new)
         optimizer = Optimizer.new
         generator = CodeGenerator.new table, tree
@@ -62,12 +73,17 @@ module Chalk
         return optimizer.optimize(code)
       end
 
-      private def create_code(tree : Builtin::BuiltinFunction, table, instruction = nil)
+      # Generate code for a builtin function. Neither the *table* nor the *instruction*
+      # are used, and serve to allow function overloading.
+      private def create_code(function : Builtin::BuiltinFunction, table, instruction = nil)
         instructions = [] of Ir::Instruction
-        tree.generate!(instructions)
+        function.generate!(instructions)
         return instructions
       end
 
+      # Creates a hash containing function names and their generated code.
+      # Only functions parsed from the file are compiled, and the *table*
+      # is used for looking up identifiers.
       private def create_code(trees : Array(Trees::TreeFunction), table)
         code = {} of String => Array(Ir::Instruction)
         trees.each do |tree|
@@ -76,6 +92,9 @@ module Chalk
         return code
       end
 
+      # Runs in the tree `Ui::OutputMode`. The file is
+      # tokenized and parsed, and the result is printed
+      # to the standard output.
       private def run_tree
         trees = create_trees(@config.file)
         trees.each do |it|
@@ -83,6 +102,11 @@ module Chalk
         end
       end
 
+      # Runs in the intermediate `Ui::OutputMode`. The file
+      # is tokenized and parsed, and for each function,
+      # intermediate representation is generated. However,
+      # an executable is not generated, and the IR
+      # is printed to the screen.
       private def run_intermediate
         trees = create_trees(@config.file)
         table = create_table(trees)
@@ -94,9 +118,11 @@ module Chalk
         end
       end
 
+      # Creates binary from the given *instructions*,
+      # using the symbol *table* for lookups, and writes
+      # the output to *dest*
       private def generate_binary(table, instructions, dest)
-        context = Ir::InstructionContext.new table, instructions.size
-        binary = instructions.map_with_index { |it, i| it.to_bin(context, i).to_u16 }
+        binary = instructions.map_with_index { |it, i| it.to_bin(table, instructions.size, i).to_u16 }
         binary.each do |inst|
           first = (inst >> 8).to_u8
           dest.write_byte(first)
@@ -105,6 +131,8 @@ module Chalk
         end
       end
 
+      # Find all calls performed by the functions
+      # stored in the *table*, starting at the main function.
       private def collect_calls(table)
         open = Set(String).new
         done = Set(String).new
@@ -128,6 +156,8 @@ module Chalk
         return done
       end
 
+      # Runs in the binary `Ui::OutputMode`. The file is
+      # converted into an executable.
       private def run_binary
         all_instructions = [] of Ir::Instruction
         trees = create_trees(@config.file)
@@ -154,6 +184,7 @@ module Chalk
         file.close
       end
 
+      # Runs the compiler.
       def run
         case @config.mode
         when Ui::OutputMode::Tree

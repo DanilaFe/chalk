@@ -1,5 +1,6 @@
 module Chalk
   module Builtin
+    # Inline function to draw sprite at address I.
     class InlineDrawFunction < InlineFunction
       def initialize
         @param_count = 3
@@ -15,6 +16,7 @@ module Chalk
       end
     end
 
+    # Inline function to await for a key and return it.
     class InlineAwaitKeyFunction < InlineFunction
       def initialize
         @param_count = 0
@@ -25,6 +27,7 @@ module Chalk
       end
     end
 
+    # Inline function to get font for a given value.
     class InlineGetFontFunction < InlineFunction
       def initialize
         @param_count = 1
@@ -36,6 +39,7 @@ module Chalk
       end
     end
 
+    # Inline function to set the delay timer.
     class InlineSetDelayFunction < InlineFunction
       def initialize
         @param_count = 1
@@ -47,6 +51,7 @@ module Chalk
       end
     end
 
+    # Inline function to get the delay timer.
     class InlineGetDelayFunction < InlineFunction
       def initialize
         @param_count = 0
