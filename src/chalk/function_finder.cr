@@ -1,13 +1,15 @@
 module Chalk
-  class CallVisitor < Visitor
-    property calls : Set(String)
+  module Trees
+    class CallVisitor < Visitor
+      property calls : Set(String)
 
-    def initialize
-      @calls = Set(String).new
-    end
+      def initialize
+        @calls = Set(String).new
+      end
 
-    def visit(t : TreeCall)
-      @calls << t.name
+      def visit(t : TreeCall)
+        @calls << t.name
+      end
     end
   end
 end

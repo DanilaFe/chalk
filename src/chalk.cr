@@ -2,9 +2,9 @@ require "./chalk/*"
 require "option_parser"
 
 module Chalk
-  config = Config.parse!
+  config = Ui::Config.parse!
   exit unless config.validate!
 
-  compiler = Compiler.new config
+  compiler = Compiler::Compiler.new config
   compiler.run
 end

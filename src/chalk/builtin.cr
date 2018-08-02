@@ -1,21 +1,23 @@
 module Chalk
-  class BuiltinFunction
-    getter param_count : Int32
+  module Builtin
+    class BuiltinFunction
+      getter param_count : Int32
 
-    def initialize(@param_count)
+      def initialize(@param_count)
+      end
+
+      def generate!(codegen)
+      end
     end
 
-    def generate!(codegen)
-    end
-  end
+    class InlineFunction
+      getter param_count : Int32
 
-  class InlineFunction
-    getter param_count : Int32
+      def initialize(@param_count)
+      end
 
-    def initialize(@param_count)
-    end
-
-    def generate!(codegen, params, table, target, free)
+      def generate!(codegen, params, table, target, free)
+      end
     end
   end
 end
