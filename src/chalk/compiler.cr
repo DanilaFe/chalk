@@ -53,11 +53,11 @@ module Chalk
         end
         @logger.debug("Done creating symbol table")
 
-        table["draw"] = FunctionEntry.new Builtin::InlineDrawFunction.new
         table["get_key"] = FunctionEntry.new Builtin::InlineAwaitKeyFunction.new
-        table["get_font"] = FunctionEntry.new Builtin::InlineGetFontFunction.new
         table["set_delay"] = FunctionEntry.new Builtin::InlineSetDelayFunction.new
         table["get_delay"] = FunctionEntry.new Builtin::InlineGetDelayFunction.new
+        table["set_sound"] = FunctionEntry.new Builtin::InlineSetSoundFunction.new
+        table["draw_number"] = FunctionEntry.new Builtin::InlineDrawNumberFunction.new
         return table
       end
 

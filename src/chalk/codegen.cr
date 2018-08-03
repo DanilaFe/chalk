@@ -8,11 +8,6 @@ module Chalk
     class CodeGenerator
       include Emitter
 
-      # The register into which the return value of a function is stored.
-      RETURN_REG = 14
-      # The register into which the "stack pointer" is stored.
-      STACK_REG  = 13
-
       # Gets the instructions currently emitted by this code generator.
       getter instructions
 
@@ -42,10 +37,7 @@ module Chalk
       # `#generate!` call.
       def generate!(tree, function : Trees::TreeFunction | Builtin::BuiltinFunction, table, target, free)
         start_at = free
-        # Move I to stack
-        setis
-        # Get to correct stack position
-        addi STACK_REG
+        to_stack
         # Store variables
         store (start_at - 1) unless start_at == 0
         # Increment I and stack position
@@ -67,10 +59,7 @@ module Chalk
         # Reduce stack pointer
         load free, start_at
         opr TokenType::OpSub, STACK_REG, free
-        # Move I to stack
-        setis
-        # Get to correct stack position
-        addi STACK_REG
+        to_stack
         # Restore
         restore (start_at - 1) unless start_at == 0
         # Get call value into target

@@ -1,8 +1,19 @@
 module Chalk
   module Compiler
+    # The register into which the return value of a function is stored.
+    RETURN_REG = 14
+    # The register into which the "stack pointer" is stored.
+    STACK_REG  = 13
+
     # Module to emit instructions and store
     # them into an existing array.
     module Emitter
+      # Moves I to the next available value on the stack.
+      def to_stack
+        setis
+        addi STACK_REG
+      end
+
       # Emits an instruction to load a *value* into a register, *into*.
       def load(into, value)
         inst = Ir::LoadInstruction.new into, value.to_i32
