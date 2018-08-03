@@ -4,11 +4,8 @@ module Chalk
     # that is provided by chalk's standard library, and therefore
     # has predefined output.
     abstract class BuiltinFunction
-      # Gets the number of parameters this function has.
-      getter param_count : Int32
-
       # Creates a new function with *param_count* parameters.
-      def initialize(@param_count)
+      def initialize()
       end
 
       # Uses the given `Compiler::Emitter` to output code.
@@ -22,11 +19,8 @@ module Chalk
     # function also accepts trees rather than register numbers,
     # and therefore can accept and manipulate trees.
     abstract class InlineFunction
-      # Gets the number of parameters this function has.
-      getter param_count : Int32
-
       # Creates a new function with *param_count* parameters.
-      def initialize(@param_count)
+      def initialize()
       end
 
       # Generates code like `Compiler::CodeGenerator` would.

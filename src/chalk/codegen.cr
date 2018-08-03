@@ -96,12 +96,9 @@ module Chalk
           generate! tree.right, table, free, free + 1
           opr tree.op, target, free
         when Trees::TreeCall
-          entry = table[tree.name]?
-          raise "Unknown function" unless entry &&
-                                          entry.is_a?(FunctionEntry)
-          function = entry.function
-          raise "Invalid call" if tree.params.size != function.param_count
-          generate! tree, function, table, target, free
+          entry = table[tree.name]?.not_nil!
+          raise "Unknown function" unless entry.is_a?(FunctionEntry)
+          generate! tree, entry.function, table, target, free
         when Trees::TreeBlock
           table = Table.new(table)
           tree.children.each do |child|
