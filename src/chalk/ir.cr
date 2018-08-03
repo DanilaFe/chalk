@@ -12,6 +12,33 @@ module Chalk
       end
     end
 
+    # Instruction to clear the screen
+    class ClearInstruction < Instruction
+      def to_s(io)
+        io << "clear"
+      end
+
+      def to_bin(table, stack, index)
+        return 0x00e0
+      end
+    end
+
+    # Instruction to assign a random value to a register.
+    class RandomInstruction < Instruction
+      def initialize(@register : Int32, @value : Int32)
+      end
+
+      def to_s(io)
+        io << "rand R"
+        @register.to_s(16, io)
+        io << " " << @value
+      end
+
+      def to_bin(table, stack, index)
+        return 0xc000 | (@register << 8) | (@value)
+      end
+    end
+
     # Instruction to load a value into a register.
     class LoadInstruction < Instruction
       def initialize(@register : Int32, @value : Int32)
@@ -365,6 +392,35 @@ module Chalk
 
       def to_bin(table, stack, index)
         return 0xf007 | (@into << 8)
+      end
+    end
+
+    # Instruction to set the sound timer to a value.
+    class SetSoundTimerInstruction < Instruction
+      def initialize(@from : Int32)
+      end
+
+      def to_s(io)
+        io << "set_sound R"
+        @from.to_s(16, io)
+      end
+
+      def to_bin(table, stack, index)
+        return 0xf018 | (@from << 8)
+      end
+    end
+
+    class BCDInstruction < Instruction
+      def initialize(@from : Int32)
+      end
+
+      def to_s(io)
+        io << "bcd R"
+        @from.to_s(16, io)
+      end
+
+      def to_bin(table, stack, index)
+        return 0xf033 | (@from << 8)
       end
     end
   end
