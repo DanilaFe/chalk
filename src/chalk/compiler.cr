@@ -12,7 +12,7 @@ module Chalk
       def initialize(@config : Ui::Config)
         @logger = Logger.new STDOUT
         @logger.debug("Initialized compiler")
-        @logger.level = Logger::DEBUG
+        @logger.level = @config.loglevel
       end
 
       # Reads a file an extracts instances of

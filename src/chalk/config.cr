@@ -22,10 +22,15 @@ module Chalk
       getter mode : OutputMode
       # Sets the mode in which the compiler should operate.
       setter mode : OutputMode
+      # Gets the log level
+      getter loglevel : Logger::Severity
+      # Sets the log level
+      setter loglevel : Logger::Severity
 
       # Creates a new configuration.
       def initialize(@file = "",
-                     @mode = OutputMode::Tree)
+                     @mode = OutputMode::Tree,
+                     @loglevel = Logger::Severity::DEBUG)
       end
 
       # Reads a configuration from the command line options.
@@ -34,19 +39,31 @@ module Chalk
         OptionParser.parse! do |parser|
           parser.banner = "Usage: chalk [arguments]"
           parser.on("-m", "--mode=MODE", "Set the mode of the compiler.") do |mode|
-            case mode.downcase
-            when "tree", "t"
-              config.mode = OutputMode::Tree
-            when "intermediate", "i"
-              config.mode = OutputMode::Intermediate
-            when "binary", "b"
-              config.mode = OutputMode::Binary
-            else
-              puts "Invalid mode type. Using default."
-            end
+            hash = { 
+                "tree" => OutputMode::Tree,
+                "t" => OutputMode::Tree,
+                "intermediate" => OutputMode::Intermediate,
+                "i" => OutputMode::Intermediate,
+                "binary" => OutputMode::Binary,
+                "b" => OutputMode::Binary
+            }
+            puts "Invalid mode type. Using default." if !hash.has_key?(mode)
+            config.mode = hash[mode]? || OutputMode::Tree
           end
           parser.on("-f", "--file=FILE", "Set the input file to compile.") do |file|
             config.file = file
+          end
+          parser.on("-l", "--log=LOG", "Set the log level of the compiler.") do |log|
+            hash = {
+                "debug" => Logger::Severity::DEBUG,
+                "fatal" => Logger::Severity::FATAL,
+                "error" => Logger::Severity::ERROR,
+                "info" => Logger::Severity::INFO,
+                "unknown" => Logger::Severity::UNKNOWN,
+                "warn" => Logger::Severity::WARN
+            }
+            puts "Invalid log level. Using default." if !hash.has_key?(log)
+            config.loglevel = hash[log]? || Logger::Severity::DEBUG
           end
           parser.on("-h", "--help", "Show this message.") { puts parser }
         end
