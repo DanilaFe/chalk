@@ -18,6 +18,11 @@ module Chalk
       end
     end
 
+    class Reducer(T)
+      def reduce(tree, children)
+      end
+    end
+
     # The base class of a tree.
     class Tree
       def accept(v)
@@ -27,6 +32,10 @@ module Chalk
 
       def apply(t)
         return t.transform(self)
+      end
+
+      def reduce(r : Reducer(T)) forall T
+          return r.reduce(self, [] of T)
       end
     end
 
@@ -66,6 +75,10 @@ module Chalk
         end
         return t.transform(self)
       end
+
+      def reduce(r : Reducer(T)) forall T
+          return r.reduce(self, @params.map &.reduce(r))
+      end
     end
 
     # A tree that represents an operation on two values.
@@ -89,6 +102,10 @@ module Chalk
         @right = @right.apply(t)
         return t.transform(self)
       end
+
+      def reduce(r : Reducer(T)) forall T
+          return r.reduce(self, [@left.reduce(r), @right.reduce(r)])
+      end
     end
 
     # A tree that represents a block of statements.
@@ -110,6 +127,9 @@ module Chalk
         end
         return t.transform(self)
       end
+      def reduce(r : Reducer(T)) forall T
+          return r.reduce(self, @children.map &.reduce(r))
+      end
     end
 
     # A tree that represents a function declaration.
@@ -117,8 +137,10 @@ module Chalk
       property name : String
       property params : Array(String)
       property block : Tree
+      getter type
 
-      def initialize(@name, @params, @block)
+      def initialize(@name, @params, return_type : Compiler::Type, @block)
+        @type = Compiler::FunctionType.new([Compiler::Type::U8] * @params.size, return_type)
       end
 
       def param_count
@@ -134,6 +156,10 @@ module Chalk
       def apply(t)
         @block = @block.apply(t)
         return t.transform(self)
+      end
+
+      def reduce(r : Reducer(T)) forall T
+          return r.reduce(self, [@block.reduce(r)])
       end
     end
 
@@ -156,6 +182,10 @@ module Chalk
         @expr = @expr.apply(t)
         return t.transform(self)
       end
+
+      def reduce(r : Reducer(T)) forall T
+        r.reduce(self, [@expr.reduce(r)])
+      end
     end
 
     # A tree that represents the assignment
@@ -176,6 +206,10 @@ module Chalk
       def apply(t)
         @expr = @expr.apply(t)
         return t.transform(self)
+      end
+
+      def reduce(r : Reducer(T)) forall T
+        r.reduce(self, [@expr.reduce(r)])
       end
     end
 
@@ -202,6 +236,16 @@ module Chalk
         @otherwise = @otherwise.try &.apply(t)
         return t.transform(self)
       end
+
+      def reduce(r : Reducer(T)) forall T
+          cond = @condition.reduce(r)
+          blk = @block.reduce(r)
+          if other = @otherwise
+              r.reduce(self, [cond, blk,other.reduce(r)])
+          else
+              r.reduce(self, [cond, blk])
+          end
+      end
     end
 
     # A tree that represents a while loop.
@@ -224,6 +268,10 @@ module Chalk
         @block = @block.apply(t)
         return t.transform(self)
       end
+
+      def reduce(r : Reducer(T)) forall T
+          r.reduce(self, [@condition.reduce(r), @block.reduce(r)])
+      end
     end
 
     # A tree that represents a return statement.
@@ -242,6 +290,10 @@ module Chalk
       def apply(t)
         @rvalue = @rvalue.apply(t)
         return t.transform(self)
+      end
+
+      def reduce(r : Reducer(T)) forall T
+        r.reduce(self, [@rvalue.reduce(r)])
       end
     end
   end

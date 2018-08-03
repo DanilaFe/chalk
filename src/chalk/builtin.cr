@@ -13,6 +13,8 @@ module Chalk
 
       # Uses the given `Compiler::Emitter` to output code.
       abstract def generate!(codegen)
+      # Gets the `Compiler::FunctionType` of this function.
+      abstract def type
     end
 
     # A function to which a call is not generated. This function
@@ -32,6 +34,8 @@ module Chalk
       # the *params* are trees that are being passed as arguments.
       # See `Compiler::CodeGenerator#generate!` for what the other parameters mean.
       abstract def generate!(codegen, params, table, target, free)
+      # Gets the `Compiler::FunctionType` of this function.
+      abstract def type
     end
   end
 end

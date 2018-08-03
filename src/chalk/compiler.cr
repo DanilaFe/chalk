@@ -65,6 +65,7 @@ module Chalk
       # looking up identifiers in the symbol *table*, and appending the given *instruction*
       # at the end of the function to ensure correct program flow.
       private def create_code(tree : Trees::TreeFunction, table, instruction = Ir::ReturnInstruction.new)
+        tree.reduce(Trees::TypeChecker.new table, tree.type.return_type)
         optimizer = Optimizer.new
         generator = CodeGenerator.new table, tree
         @logger.debug("Generating code for #{tree.name}")

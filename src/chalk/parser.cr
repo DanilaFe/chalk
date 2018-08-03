@@ -8,7 +8,10 @@ module Chalk
 
       # Creates a parser for a type.
       private def create_type
-        either(type(Compiler::TokenType::KwU0), type(Compiler::TokenType::KwU8), type(Compiler::TokenType::KwU12))
+        either(type(Compiler::TokenType::KwU0),
+               type(Compiler::TokenType::KwU4),
+               type(Compiler::TokenType::KwU8),
+               type(Compiler::TokenType::KwU12))
       end
 
       # Creates a parser for an integer literal.
@@ -176,7 +179,13 @@ module Chalk
             params = arr[3..arr.size - 5].map &.as(Compiler::Token).string
             code = arr[arr.size - 1].as(Trees::Tree)
             type = arr[arr.size - 2].as(Compiler::Token).type
-            Trees::TreeFunction.new(name, params, code)
+            table = {
+                Compiler::TokenType::KwU0 => Compiler::Type::U0,
+                Compiler::TokenType::KwU4 => Compiler::Type::U4,
+                Compiler::TokenType::KwU8 => Compiler::Type::U8,
+                Compiler::TokenType::KwU12 => Compiler::Type::U12
+            }
+            Trees::TreeFunction.new(name, params, table[type], code)
           end
         return func
       end

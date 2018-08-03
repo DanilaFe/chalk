@@ -21,6 +21,7 @@ module Chalk
       KwInline
       KwFun
       KwU0
+      KwU4
       KwU8
       KwU12
       KwVar
@@ -70,6 +71,7 @@ module Chalk
         @lexer.add_pattern("inline", TokenType::KwInline.value)
         @lexer.add_pattern("fun", TokenType::KwFun.value)
         @lexer.add_pattern("u0", TokenType::KwU0.value)
+        @lexer.add_pattern("u4", TokenType::KwU4.value)
         @lexer.add_pattern("u8", TokenType::KwU8.value)
         @lexer.add_pattern("u12", TokenType::KwU12.value)
         @lexer.add_pattern("var", TokenType::KwVar.value)
