@@ -180,7 +180,7 @@ module Chalk
           all_instructions << Ir::ReturnInstruction.new
         end
 
-        file = File.open("out.ch8", "w")
+        file = File.open(@config.output, "w")
         generate_binary(table, all_instructions, file)
         file.close
       end

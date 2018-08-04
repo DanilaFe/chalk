@@ -22,15 +22,20 @@ module Chalk
       getter mode : OutputMode
       # Sets the mode in which the compiler should operate.
       setter mode : OutputMode
-      # Gets the log level
+      # Gets the log level.
       getter loglevel : Logger::Severity
-      # Sets the log level
+      # Sets the log level.
       setter loglevel : Logger::Severity
+      # Gets the output file destination.
+      getter output : String
+      # Sets the output file destination.
+      setter output : String
 
       # Creates a new configuration.
       def initialize(@file = "",
                      @mode = OutputMode::Tree,
-                     @loglevel = Logger::Severity::DEBUG)
+                     @loglevel = Logger::Severity::DEBUG,
+                     @output : String = "out.ch8")
       end
 
       # Reads a configuration from the command line options.
@@ -52,6 +57,9 @@ module Chalk
           end
           parser.on("-f", "--file=FILE", "Set the input file to compile.") do |file|
             config.file = file
+          end
+          parser.on("-o", "--output=OUT", "Sets the output file.") do |out|
+            config.output = out
           end
           parser.on("-l", "--log=LOG", "Set the log level of the compiler.") do |log|
             hash = {
