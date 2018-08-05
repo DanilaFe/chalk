@@ -1,0 +1,8 @@
+fun main(): u0 {
+    var a = 5;
+    var b = 0;
+    while(a) {
+        b = b + 2;
+        a = a - 1;
+    }
+}

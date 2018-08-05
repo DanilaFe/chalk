@@ -1,0 +1,13 @@
+fun main(): u0 {
+    var a = 1;
+    var b = 0;
+    var previous = 0;
+    draw_number(0, 24, 13);
+
+    while(a) {
+        previous = b;
+        b = get_key();
+        draw_number(previous, 24, 13);
+        draw_number(b, 24, 13);
+    }
+}

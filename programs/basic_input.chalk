@@ -1,0 +1,4 @@
+fun main(): u0 {
+    var a = get_key();
+    var b = get_key();
+}

@@ -1,0 +1,17 @@
+fun main(): u0 {
+    var a = 3+3;
+    if(a) {
+        a = 0;
+    }
+
+    var b = 0;
+    if(b) {
+        b = 4;
+    }
+
+    if(b) {
+        b = 4;
+    } else {
+        b = 5;
+    }
+}
