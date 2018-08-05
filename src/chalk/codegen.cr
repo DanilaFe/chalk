@@ -90,8 +90,10 @@ module Chalk
           generate! tree, entry.function, table, target, free
         when Trees::TreeBlock
           table = Table.new(table)
+          throwaway = free
+          free += 1
           tree.children.each do |child|
-            free += generate! child, table, free, free + 1
+            free += generate! child, table, throwaway, free
           end
         when Trees::TreeVar
           entry = table[tree.name]?
@@ -143,7 +145,7 @@ module Chalk
 
       # Generates code for the function that was given to it.
       def generate!
-        generate!(@function.block, @table, -1, @registers)
+        generate!(@function.block, @table, 0, @registers)
         return @instructions
       end
     end
