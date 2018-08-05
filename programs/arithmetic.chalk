@@ -1,0 +1,7 @@
+fun main(): u0 {
+    1+2+3;
+    var a = 5+5;
+    var b = a;
+    var a = a + b;
+    var c = a - b;
+}

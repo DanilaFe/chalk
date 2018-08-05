@@ -1,0 +1,21 @@
+fun double(a): u8 {
+    return a + a;
+}
+
+fun quadruple(a): u8 {
+    return double(double(a));
+}
+
+fun reuse(): u0 {
+    var one = 2;
+    var two = 4;
+    var three = 6;
+}
+
+fun main(): u0 {
+    var a = quadruple(4);
+    var one = 1;
+    var two = 2;
+    var three = 3;
+    reuse();
+}
