@@ -4,6 +4,8 @@ module Chalk
     RETURN_REG = 14
     # The register into which the "stack pointer" is stored.
     STACK_REG  = 13
+    # Register used for throwing away values.
+    THROWAWAY_REG = 12
 
     # Module to emit instructions and store
     # them into an existing array.

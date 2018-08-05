@@ -90,10 +90,8 @@ module Chalk
           generate! tree, entry.function, table, target, free
         when Trees::TreeBlock
           table = Table.new(table)
-          throwaway = free
-          free += 1
           tree.children.each do |child|
-            free += generate! child, table, throwaway, free
+            free += generate! child, table, THROWAWAY_REG, free
           end
         when Trees::TreeVar
           entry = table[tree.name]?
