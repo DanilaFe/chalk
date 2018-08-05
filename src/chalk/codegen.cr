@@ -134,7 +134,8 @@ module Chalk
           cond_jump.offset = @instructions.size - old_size + 1
           after_jump.offset = before_cond - instructions.size + 1
         when Trees::TreeReturn
-          generate! tree.rvalue, table, RETURN_REG, free
+          generate! tree.rvalue, table, free, free + 1
+          loadr RETURN_REG, free
           ret
         end
         return 0
