@@ -1,11 +1,7 @@
 module Chalk
   module Compiler
-    # An entry in the symbol table.
-    class Entry
-    end
-
     # An entry that represents a function in the symbol table.
-    class FunctionEntry < Entry
+    class FunctionEntry
       # Gets the function stored in this entry.
       getter function
       # Gets the address in code of this function.
@@ -23,7 +19,7 @@ module Chalk
     end
 
     # An entry that represents a variable in the symbol table.
-    class VarEntry < Entry
+    class VarEntry
       # Gets the register occupied by the variable
       # in this entry.
       getter register
@@ -42,22 +38,22 @@ module Chalk
       getter parent
 
       def initialize(@parent : Table? = nil)
-        @data = {} of String => Entry
+        @functions = {} of String => FunctionEntry
+        @vars = {} of String => VarEntry
       end
 
-      # Looks up the given *key* first in this table,
-      # then in its parent, continuing recursively.
-      def []?(key)
-        if entry = @data[key]?
-          return entry
-        end
-        return @parent.try &.[key]?
+      macro table_functions(name)
+          def get_{{name}}?(key)
+             @{{name}}s[key]? || @parent.try &.get_{{name}}?(key)
+          end
+
+          def set_{{name}}(key, value)
+             @{{name}}s[key] = value
+          end
       end
 
-      # Stores an *entry* under the given *key* into this table.
-      def []=(key, entry)
-        @data[key] = entry
-      end
+      table_functions function
+      table_functions var
 
       def to_s(io)
         @parent.try &.to_s(io)

@@ -19,7 +19,7 @@ module Chalk
         @table = Table.new table
 
         @function.params.each do |param|
-          @table[param] = VarEntry.new @registers
+          @table.set_var param, VarEntry.new @registers
           @registers += 1
         end
       end
@@ -74,9 +74,8 @@ module Chalk
       def generate!(tree, table, target, free)
         case tree
         when Trees::TreeId
-          entry = table[tree.id]?
-          raise "Unknown variable" unless entry &&
-                                          entry.is_a?(VarEntry)
+          entry = table.get_var? tree.id
+          raise "Unknown variable" unless entry
           loadr target, entry.register
         when Trees::TreeLit
           load target, tree.lit
@@ -85,7 +84,7 @@ module Chalk
           generate! tree.right, table, free, free + 1
           opr tree.op, target, free
         when Trees::TreeCall
-          entry = table[tree.name]?.not_nil!
+          entry = table.get_function?(tree.name).not_nil!
           raise "Unknown function" unless entry.is_a?(FunctionEntry)
           generate! tree, entry.function, table, target, free
         when Trees::TreeBlock
@@ -94,19 +93,17 @@ module Chalk
             free += generate! child, table, THROWAWAY_REG, free
           end
         when Trees::TreeVar
-          entry = table[tree.name]?
+          entry = table.get_var? tree.name
           if entry == nil
             entry = VarEntry.new free
             free += 1
-            table[tree.name] = entry
+            table.set_var tree.name, entry
           end
-          raise "Unknown variable" unless entry.is_a?(VarEntry)
-          generate! tree.expr, table, entry.register, free
+          generate! tree.expr, table, entry.as(VarEntry).register, free
           return 1
         when Trees::TreeAssign
-          entry = table[tree.name]?
-          raise "Unknown variable" unless entry &&
-                                          entry.is_a?(VarEntry)
+          entry = table.get_var? tree.name
+          raise "Unknown variable" unless entry
           generate! tree.expr, table, entry.register, free
         when Trees::TreeIf
           generate! tree.condition, table, free, free + 1

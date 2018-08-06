@@ -49,15 +49,15 @@ module Chalk
         @logger.debug("Creating symbol table")
         trees.each do |tree|
           @logger.debug("Storing #{tree.name} in symbol table")
-          table[tree.name] = FunctionEntry.new tree
+          table.set_function tree.name, FunctionEntry.new tree
         end
         @logger.debug("Done creating symbol table")
 
-        table["get_key"] = FunctionEntry.new Builtin::InlineAwaitKeyFunction.new
-        table["set_delay"] = FunctionEntry.new Builtin::InlineSetDelayFunction.new
-        table["get_delay"] = FunctionEntry.new Builtin::InlineGetDelayFunction.new
-        table["set_sound"] = FunctionEntry.new Builtin::InlineSetSoundFunction.new
-        table["draw_number"] = FunctionEntry.new Builtin::InlineDrawNumberFunction.new
+        table.set_function "get_key", FunctionEntry.new Builtin::InlineAwaitKeyFunction.new
+        table.set_function "set_delay", FunctionEntry.new Builtin::InlineSetDelayFunction.new
+        table.set_function "get_delay", FunctionEntry.new Builtin::InlineGetDelayFunction.new
+        table.set_function "set_sound", FunctionEntry.new Builtin::InlineSetSoundFunction.new
+        table.set_function "draw_number", FunctionEntry.new Builtin::InlineDrawNumberFunction.new
         return table
       end
 
@@ -143,8 +143,8 @@ module Chalk
           first = open.first
           open.delete first
 
-          entry = table[first]?
-          raise "Unknown function" unless entry && entry.is_a?(FunctionEntry)
+          entry = table.get_function? first
+          raise "Unknown function" unless entry
           function = entry.function
           next if function.is_a?(Builtin::InlineFunction)
           done << first
@@ -166,13 +166,13 @@ module Chalk
         names = collect_calls(table)
         names.delete "main"
 
-        main_entry = table["main"]?.as(FunctionEntry)
+        main_entry = table.get_function?("main").not_nil!
         all_instructions.concat create_code(main_entry.function.as(Trees::TreeFunction),
           table, Ir::JumpRelativeInstruction.new 0)
         main_entry.addr = 0
 
         names.each do |name|
-          entry = table[name]?.as(FunctionEntry)
+          entry = table.get_function?(name).not_nil!
           entry.addr = all_instructions.size
           function = entry.function
           raise "Trying to compile inlined function" if function.is_a?(Builtin::InlineFunction)

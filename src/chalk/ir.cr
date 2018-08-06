@@ -282,7 +282,7 @@ module Chalk
       end
 
       def to_bin(table, stack, index)
-        return 0x2000 | (table[name]?.as(Compiler::FunctionEntry).addr * 2 + 0x200)
+          return 0x2000 | (table.get_function?(name).as(Compiler::FunctionEntry).addr * 2 + 0x200)
       end
     end
 

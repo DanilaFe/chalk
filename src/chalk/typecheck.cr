@@ -12,8 +12,8 @@ module Chalk
             end
 
             def reduce(t : TreeCall, children)
-                entry = @table[t.name]?
-                raise "Unknwon function" unless entry && entry.is_a?(Compiler::FunctionEntry)
+                entry = @table.get_function? t.name
+                raise "Unknwon function" unless entry
                 type = entry.function.type
                 raise "Invalid parameters" if type.param_types.size != children.size
                 children.each_with_index do |child, i|
