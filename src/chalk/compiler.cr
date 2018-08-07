@@ -33,8 +33,9 @@ module Chalk
           @logger.debug("Beginning constant folding")
           folder = Trees::ConstantFolder.new
           trees.map! do |tree|
+            next tree unless tree.is_a?(Trees::TreeFunction)
             @logger.debug("Constant folding #{tree.name}")
-            tree.apply(folder).as(Trees::TreeFunction)
+            tree.apply(folder)
           end
           @logger.debug("Done constant folding")
           return trees
@@ -48,8 +49,16 @@ module Chalk
         table = Table.new
         @logger.debug("Creating symbol table")
         trees.each do |tree|
-          @logger.debug("Storing #{tree.name} in symbol table")
-          table.set_function tree.name, FunctionEntry.new tree
+          case tree
+          when Trees::TreeSprite
+              @logger.debug("Storing sprite #{tree.name} in symbol table")
+              table.set_sprite tree.name, SpriteEntry.new tree.sprite
+          when Trees::TreeFunction
+              @logger.debug("Storing function #{tree.name} in symbol table")
+              table.set_function tree.name, FunctionEntry.new tree
+          else
+              @logger.debug("Unexpected tree type in input.")
+          end
         end
         @logger.debug("Done creating symbol table")
 
@@ -91,6 +100,11 @@ module Chalk
           code[tree.name] = create_code(tree, table)
         end
         return code
+      end
+
+      private def create_code(trees : Array(Trees::Tree), table)
+        functions = trees.select &.is_a?(Trees::TreeFunction)
+        return create_code(functions.map &.as(Trees::TreeFunction), table)
       end
 
       # Runs in the tree `Ui::OutputMode`. The file is

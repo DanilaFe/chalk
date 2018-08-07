@@ -1,0 +1,9 @@
+sprite dum [
+`  xx  `
+`  xx  `
+`  xx  `
+]
+
+fun main(): u0 {
+
+}

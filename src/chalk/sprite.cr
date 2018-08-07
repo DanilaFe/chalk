@@ -1,5 +1,5 @@
 module Chalk
-  module Table
+  module Compiler
     class Sprite
       def initialize
         @pixels = Hash(UInt8, UInt8).new(default_value: 0_u8)
@@ -19,6 +19,22 @@ module Chalk
           end
           @pixels[i.to_u8] = byte
         end
+      end
+      
+      def initialize(tokens)
+          raise "Invalid sprite" if tokens.size > 15
+          @pixels = Hash(UInt8, UInt8).new(default_value: 0_u8)
+          tokens.each_with_index do |token, i|
+            byte = 0_u8
+            substring = token[1..token.size - 2]
+            raise "Invalid sprite" if substring.size > 8
+            bit = 0b10000000
+            substring.each_char do |char|
+                byte |= bit if char == 'x'
+                bit >>= 1
+            end
+            @pixels[i.to_u8] = byte
+          end
       end
 
       def set_pixel(x, y)

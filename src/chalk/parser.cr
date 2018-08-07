@@ -6,6 +6,20 @@ module Chalk
     class Parser
       include ParserBuilder
 
+      private def create_sprite
+        type(Compiler::TokenType::KwSprite)
+            .then(type(Compiler::TokenType::Id))
+            .then(char('['))
+            .then(many(type(Compiler::TokenType::SpriteRow)))
+            .then(char(']'))
+            .transform do |array|
+            array = array.flatten
+            name = array[1].string
+            sprite = Compiler::Sprite.new(array[3..array.size - 2].map &.string)
+            Trees::TreeSprite.new(name, sprite).as(Trees::Tree)
+        end
+      end
+
       # Creates a parser for a type.
       private def create_type
         either(type(Compiler::TokenType::KwU0),
@@ -185,14 +199,14 @@ module Chalk
                 Compiler::TokenType::KwU8 => Compiler::Type::U8,
                 Compiler::TokenType::KwU12 => Compiler::Type::U12
             }
-            Trees::TreeFunction.new(name, params, table[type], code)
+            Trees::TreeFunction.new(name, params, table[type], code).as(Trees::Tree)
           end
         return func
       end
 
       def initialize
         _, block = create_statement_block
-        @parser = many(create_func(block, create_type)).as(BasicParser(Array(Trees::TreeFunction)))
+        @parser = many(either(create_func(block, create_type), create_sprite)).as(BasicParser(Array(Trees::Tree)))
       end
 
       # Parses the given tokens into a tree.

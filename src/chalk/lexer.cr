@@ -7,6 +7,7 @@ module Chalk
       Any,
       Str,
       Id,
+      SpriteRow,
       LitDec,
       LitBin,
       LitHex,
@@ -54,6 +55,8 @@ module Chalk
           TokenType::Str.value)
         @lexer.add_pattern("[a-zA-Z_][a-zA-Z_0-9]*",
           TokenType::Id.value)
+        @lexer.add_pattern("`[ x]*`",
+          TokenType::SpriteRow.value)
         @lexer.add_pattern("[0-9]+",
           TokenType::LitDec.value)
         @lexer.add_pattern("0b[0-1]+",

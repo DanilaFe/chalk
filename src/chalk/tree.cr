@@ -296,5 +296,13 @@ module Chalk
         r.reduce(self, [@rvalue.reduce(r)])
       end
     end
+
+    class TreeSprite < Tree
+        property name : String
+        property sprite : Compiler::Sprite
+
+        def initialize(@name, @sprite)
+        end
+    end
   end
 end

@@ -1,3 +1,5 @@
+require "./sprite.cr"
+
 module Chalk
   module Compiler
     # An entry that represents a function in the symbol table.
@@ -32,6 +34,14 @@ module Chalk
       end
     end
 
+    class SpriteEntry
+      getter sprite : Sprite
+      getter addr : Int32
+
+      def initialize(@sprite, @addr = -1)
+      end
+    end
+
     # A symbol table.
     class Table
       # Gets the parent of this table.
@@ -40,6 +50,7 @@ module Chalk
       def initialize(@parent : Table? = nil)
         @functions = {} of String => FunctionEntry
         @vars = {} of String => VarEntry
+        @sprites = {} of String => SpriteEntry
       end
 
       macro table_functions(name)
@@ -54,10 +65,10 @@ module Chalk
 
       table_functions function
       table_functions var
+      table_functions sprite
 
       def to_s(io)
         @parent.try &.to_s(io)
-        io << @data.map { |k, v| k + ": " + v.to_s }.join("\n")
       end
     end
   end
