@@ -140,9 +140,9 @@ module Chalk
         binary = instructions.map_with_index { |it, i| it.to_bin(table, instructions.size, i).to_u16 }
         binary.each do |inst|
           first = (inst >> 8).to_u8
-          dest.write_byte(first)
+          dest << first
           second = (inst & 0xff).to_u8
-          dest.write_byte(second)
+          dest << second
         end
       end
 
@@ -180,6 +180,15 @@ module Chalk
         names = collect_calls(table)
         names.delete "main"
 
+        sprite_bytes = [] of UInt8
+        offset = 0
+        table.sprites.each do |k, v|
+          data = v.sprite.encode
+          v.offset = offset
+          offset += data.size
+          sprite_bytes.concat data
+        end
+
         main_entry = table.get_function?("main").not_nil!
         all_instructions.concat create_code(main_entry.function.as(Trees::TreeFunction),
           table, Ir::JumpRelativeInstruction.new 0)
@@ -194,8 +203,12 @@ module Chalk
           all_instructions << Ir::ReturnInstruction.new
         end
 
+        binary = [] of UInt8
         file = File.open(@config.output, "w")
-        generate_binary(table, all_instructions, file)
+        generate_binary(table, all_instructions, binary)
+        binary.each do |byte|
+          file.write_byte byte
+        end
         file.close
       end
 

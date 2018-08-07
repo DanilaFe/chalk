@@ -35,10 +35,10 @@ module Chalk
     end
 
     class SpriteEntry
-      getter sprite : Sprite
-      getter addr : Int32
+      property sprite : Sprite
+      property offset : Int32
 
-      def initialize(@sprite, @addr = -1)
+      def initialize(@sprite, @offset = -1)
       end
     end
 
@@ -46,6 +46,12 @@ module Chalk
     class Table
       # Gets the parent of this table.
       getter parent
+      # Gets the functions hash.
+      getter functions
+      # Gets the variables hash.
+      getter vars
+      # Gets the sprites hash.
+      getter sprites
 
       def initialize(@parent : Table? = nil)
         @functions = {} of String => FunctionEntry
