@@ -81,7 +81,7 @@ module Chalk
         @logger.debug("Generating code for #{tree.name}")
         code = generator.generate!
         code << instruction
-        return optimizer.optimize(code)
+        return code # optimizer.optimize(code)
       end
 
       # Generate code for a builtin function. Neither the *table* nor the *instruction*
