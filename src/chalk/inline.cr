@@ -97,5 +97,15 @@ module Chalk
           return Compiler::FunctionType.new([Compiler::Type::U8] * 3, Compiler::Type::U0)
       end
     end
+
+    class InlineClearFunction < InlineFunction
+      def generate!(emitter, params, table, target, free)
+        emitter.instructions << Ir::ClearInstruction.new
+      end
+
+      def type
+          return Compiler::FunctionType.new(([] of Compiler::Type), Compiler::Type::U0)
+      end
+    end
   end
 end

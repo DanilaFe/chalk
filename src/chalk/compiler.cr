@@ -68,6 +68,7 @@ module Chalk
         table.set_function "set_sound", FunctionEntry.new Builtin::InlineSetSoundFunction.new
         table.set_function "draw_number", FunctionEntry.new Builtin::InlineDrawNumberFunction.new
         table.set_function "draw_sprite", FunctionEntry.new Builtin::InlineDrawSpriteFunction.new
+        table.set_function "clear", FunctionEntry.new Builtin::InlineClearFunction.new
         return table
       end
 
