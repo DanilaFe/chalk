@@ -1,0 +1,39 @@
+sprite dum [
+`  x  x  `
+`  x  x  `
+`  x  x  `
+`        `
+`x      x`
+` xxxxxx `
+]
+
+fun main(): u8 {
+  var x = 0;
+  var y = 5;
+  var vy = 0;
+  var ay = 1;
+  var mode = 0;
+  while(1) {
+    draw_sprite(dum, x, y);
+    set_delay(1);
+    while(get_delay()){}
+    draw_sprite(dum, x, y);
+    if(5 - y) {
+
+    } else {
+        mode = 0;
+    }
+    if(26 - y) {
+
+    } else {
+        mode = 1;
+    }
+    if(mode) {
+        vy = vy - ay;
+        y = y - vy;
+    } else {
+        y = y + vy;
+        vy = vy + ay;
+    }
+  }
+}
