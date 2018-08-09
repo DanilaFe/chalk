@@ -297,6 +297,21 @@ module Chalk
       end
     end
 
+    class SetISpriteInstruction < Instruction
+      getter name
+
+      def initialize(@name : String)
+      end
+
+      def to_s(io)
+        io << "setispr " << @name
+      end
+      
+      def to_bin(table, stack, index)
+        return 0xa000 | (table.get_sprite?(@name).not_nil!.addr + 0x200)
+      end
+    end
+
     # Instruction to add a register to I.
     class AddIRegInstruction < Instruction
       def initialize(@reg : Int32)

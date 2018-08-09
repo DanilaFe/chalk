@@ -5,6 +5,10 @@ module Chalk
         @pixels = Hash(UInt8, UInt8).new(default_value: 0_u8)
       end
 
+      def height
+        return (@pixels.keys.max || 0_u8) + 1
+      end
+
       def initialize(string, blank_char = ' ')
         @pixels = Hash(UInt8, UInt8).new(default_value: 0_u8)
         string.split("\n").each_with_index do |s, i|

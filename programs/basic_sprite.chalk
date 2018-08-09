@@ -1,9 +1,12 @@
 sprite dum [
-`  xx  `
-`  xx  `
-`  xx  `
+`  x  x  `
+`  x  x  `
+`  x  x  `
+`        `
+`x      x`
+` xxxxxx `
 ]
 
 fun main(): u0 {
-
+  draw_sprite(dum, 0, 0);
 }

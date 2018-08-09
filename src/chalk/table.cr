@@ -36,9 +36,9 @@ module Chalk
 
     class SpriteEntry
       property sprite : Sprite
-      property offset : Int32
+      property addr : Int32
 
-      def initialize(@sprite, @offset = -1)
+      def initialize(@sprite, @addr = -1)
       end
     end
 

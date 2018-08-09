@@ -67,6 +67,7 @@ module Chalk
         table.set_function "get_delay", FunctionEntry.new Builtin::InlineGetDelayFunction.new
         table.set_function "set_sound", FunctionEntry.new Builtin::InlineSetSoundFunction.new
         table.set_function "draw_number", FunctionEntry.new Builtin::InlineDrawNumberFunction.new
+        table.set_function "draw_sprite", FunctionEntry.new Builtin::InlineDrawSpriteFunction.new
         return table
       end
 
@@ -180,15 +181,6 @@ module Chalk
         names = collect_calls(table)
         names.delete "main"
 
-        sprite_bytes = [] of UInt8
-        offset = 0
-        table.sprites.each do |k, v|
-          data = v.sprite.encode
-          v.offset = offset
-          offset += data.size
-          sprite_bytes.concat data
-        end
-
         main_entry = table.get_function?("main").not_nil!
         all_instructions.concat create_code(main_entry.function.as(Trees::TreeFunction),
           table, Ir::JumpRelativeInstruction.new 0)
@@ -203,9 +195,19 @@ module Chalk
           all_instructions << Ir::ReturnInstruction.new
         end
 
+        sprite_bytes = [] of UInt8
+        offset = 0
+        table.sprites.each do |k, v|
+          data = v.sprite.encode
+          v.addr = offset + all_instructions.size * 2
+          offset += data.size
+          sprite_bytes.concat data
+        end
+
         binary = [] of UInt8
         file = File.open(@config.output, "w")
         generate_binary(table, all_instructions, binary)
+        binary.concat sprite_bytes
         binary.each do |byte|
           file.write_byte byte
         end
